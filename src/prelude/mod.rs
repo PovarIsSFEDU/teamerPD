@@ -3,7 +3,7 @@ use rocket::response::content::Html;
 use rocket::futures::executor;
 pub type Page = Html<Option<NamedFile>>;
 
-pub fn concat<'a, 'b: 'a>(str1: &'a str, str2: &'b str) -> String {
+pub fn concat(str1: &str, str2: &str) -> String {
     let mut str = str1.to_owned();
     str.push_str(str2);
     str
