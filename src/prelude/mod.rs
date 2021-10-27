@@ -1,18 +1,14 @@
 use rocket::fs::NamedFile;
 use rocket::response::content::Html;
 use rocket::futures::executor;
-pub type Page = Html<Option<NamedFile>>;
+use std::path::Path;
 
-pub fn concat(str1: &str, str2: &str) -> String {
-    let mut str = str1.to_owned();
-    str.push_str(str2);
-    str
-}
+pub type Page = Html<Option<NamedFile>>;
 
 pub fn html_from_file(path: &str, name: &str) -> Page {
     let result = executor::block_on(
         NamedFile::open(
-            concat(path, name)
+            Path::new(path).join(name)
         )
     );
 
