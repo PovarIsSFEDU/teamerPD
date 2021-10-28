@@ -44,7 +44,7 @@ impl<'o> FromData<'o> for LoginData {
         if let Some(data) = result {
             Outcome::Success(data)
         } else {
-            Outcome::Failure((Status::BadRequest, String::from("Incorrect login data")))
+            Outcome::Failure((Status::BadRequest, String::from("Error receiving login data")))
         }
     }
 }
