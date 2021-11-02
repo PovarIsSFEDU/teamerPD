@@ -8,19 +8,25 @@ extern crate rocket;
 
 use rocket::{Rocket, Build};
 use crate::routes::{pages, api};
-use crate::database::{DatabaseDriver, MongoDriver};
+use crate::database::MongoDriver;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
+use toml::Value;
+use std::fs;
 
 #[launch]
 async fn launch() -> Rocket<Build> {
-    let db = ClientOptions::parse("mongodb+srv://pd:D0SEoobFKGWLM98R@cluster0.us09s.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+    let toml = fs::read_to_string("Config.toml").expect("Could not open toml");
+    let value = toml.as_str().parse::<Value>().unwrap();
+    let db_link = value["db_link"].as_str().unwrap();
+
+    let db = ClientOptions::parse(db_link)
         .await
         .unwrap();
     let client = Client::with_options(db).unwrap();
     let client = MongoDriver::new(client);
     rocket::build()
-        .manage(Box::new(client) as Box<dyn DatabaseDriver>)
+        .manage(client)
         .mount("/", routes![
             pages::main_page,
             pages::login,
