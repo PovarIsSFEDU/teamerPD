@@ -1,11 +1,11 @@
 use std::fs;
-use jsonwebtoken::{EncodingKey, Header};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Serialize, Deserialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 use toml::Value;
 use crate::database::User;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Token {
     token: String
 }
@@ -46,6 +46,19 @@ pub fn issue(user: User) -> Token {
     ).unwrap();
 
     Token { token }
+}
+
+pub fn validate(token: &str) -> bool {
+    let validation = jsonwebtoken::decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(get_secret().as_bytes()),
+        &Validation::default()
+    );
+
+    match validation {
+        Ok(_) => true,
+        Err(_) => false
+    }
 }
 
 fn get_secret() -> String {
