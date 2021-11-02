@@ -1,3 +1,5 @@
+pub mod request;
+
 use rocket::fs::NamedFile;
 use rocket::response::content::Html;
 use rocket::futures::executor;
