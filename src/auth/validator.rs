@@ -1,7 +1,6 @@
 use rocket::Request;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
-use crate::auth::token::Token;
 use crate::auth::token;
 
 pub struct Validator {
