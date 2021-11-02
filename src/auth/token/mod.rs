@@ -21,8 +21,7 @@ struct Claims {
 impl From<User> for Claims {
     fn from(user: User) -> Self {
         let now = current_time();
-        //let exp = now + 12 * 60 * 60 * 1000;
-        let exp = now + 30 * 1000;
+        let exp = now + 12 * 60 * 60 * 1000;
         let (adm, team, iss) = (user.adm(), user.team(), user.data().login().clone());
 
         Claims {
