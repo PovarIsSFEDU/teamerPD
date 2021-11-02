@@ -6,16 +6,23 @@ use rocket::http::Status;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LoginData {
     login: String,
+    email: String,
     password: String
 }
 
 impl LoginData {
-    fn login(&self) -> &String {
+    pub fn new(login: String, email: String, password: String) -> Self { LoginData {login, email, password} }
+    pub fn login(&self) -> &String {
         &self.login
     }
-
-    fn password(&self) -> &String {
+    pub fn password(&self) -> &String {
         &self.password
+    }
+    pub fn email(&self) -> &String {
+        &self.email
+    }
+    pub fn hash(&mut self) {
+        self.password = bcrypt::hash(&self.password, 5).unwrap();
     }
 }
 
