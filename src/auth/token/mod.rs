@@ -20,11 +20,9 @@ struct Claims {
 
 impl From<User> for Claims {
     fn from(user: User) -> Self {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
-        let exp = now + 12 * 60 * 60 * 1000;
+        let now = current_time();
+        //let exp = now + 12 * 60 * 60 * 1000;
+        let exp = now + 30 * 1000;
         let (adm, team, iss) = (user.adm(), user.team(), user.data().login().clone());
 
         Claims {
@@ -56,7 +54,7 @@ pub fn validate(token: &str) -> bool {
     );
 
     match validation {
-        Ok(_) => true,
+        Ok(result) => current_time() < result.claims.exp,
         Err(_) => false
     }
 }
@@ -66,4 +64,8 @@ fn get_secret() -> String {
     let value = toml.as_str().parse::<Value>().unwrap();
 
     value["jwt_secret"].as_str().unwrap().to_owned()
+}
+
+fn current_time() -> u128 {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
 }
