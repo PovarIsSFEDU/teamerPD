@@ -1,5 +1,4 @@
 use rocket::Request;
-use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
 use crate::auth::token;
 
@@ -9,7 +8,7 @@ pub struct Validator {
 
 #[async_trait]
 impl<'r> FromRequest<'r> for Validator {
-    type Error = &'r str;
+    type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let token = request.headers().get_one("Authorization");

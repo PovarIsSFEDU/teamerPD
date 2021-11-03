@@ -6,12 +6,11 @@ use rocket::response::status::Custom;
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
-    let validation_result = db.validate_login(&login_data).await;
+    let validation_result = db.validate_login(login_data).await;
 
     match validation_result {
         Ok(user) => {
             let token = token::issue(user);
-            let token = serde_json::to_string(&token).unwrap();
             Custom(Status::Ok, token)
         }
 
@@ -26,27 +25,26 @@ pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Cus
     }
 }
 
-#[post("/register", data = "<login_data>", format = "application/json")]
-pub async fn register(login_data: RegistrationData, db: &State<MongoDriver>) -> Custom<String> {
-    let validation_result = db.validate_registration(&login_data).await;
+#[post("/register", data = "<registration_data>", format = "application/json")]
+pub async fn register(registration_data: RegistrationData, db: &State<MongoDriver>) -> Custom<String> {
+    let validation_result = db.validate_registration(&registration_data).await;
 
     match validation_result {
-        RegisterResult::Ok => {}
-
         RegisterResult::Exists =>
             return Custom(Status::BadRequest, "User with given login or email already exists".to_owned()),
 
         RegisterResult::Other =>
-            return Custom(Status::InternalServerError, "Internal Server Error".to_owned())
+            return Custom(Status::InternalServerError, "Internal Server Error".to_owned()),
+
+        RegisterResult::Ok => {}
     }
 
-    let registration_result = db.register(login_data).await;
+    let registration_result = db.register(registration_data).await;
 
     match registration_result {
         Ok(user) => {
             let token = token::issue(user);
-            let token = serde_json::to_string(&token).unwrap();
-            Custom(Status::Ok, token)
+            Custom(Status::Created, token)
         }
 
         Err(_) => Custom(Status::InternalServerError, "Internal Server Error".to_owned())

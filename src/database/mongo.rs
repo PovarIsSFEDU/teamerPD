@@ -45,17 +45,16 @@ impl MongoDriver {
         }
     }
 
-    pub async fn validate_login(&self, data: &LoginData) -> Result<User, LoginResult> {
+    pub async fn validate_login(&self, data: LoginData) -> Result<User, LoginResult> {
         let found = self.get::<User>("login", data.login()).await;
 
         match found {
             Ok(Some(result)) => {
                 let matches = bcrypt::verify(data.password(), result.data().password()).unwrap_or(false);
 
-                if matches {
-                    Ok(result)
-                } else {
-                    Err(LoginResult::IncorrectPassword)
+                match matches {
+                    true => Ok(result),
+                    false => Err(LoginResult::IncorrectPassword)
                 }
             }
 
@@ -64,7 +63,7 @@ impl MongoDriver {
         }
     }
 
-    async fn get<T>(&self, field: &str, value: &String) -> mongodb::error::Result<Option<T>>
+    async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
     {
         let db = self.client.database("user").collection::<T>("login");

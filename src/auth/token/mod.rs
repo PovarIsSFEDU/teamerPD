@@ -33,7 +33,7 @@ impl From<User> for Claims {
     }
 }
 
-pub fn issue(user: User) -> Token {
+pub fn issue(user: User) -> String {
     let claims = Claims::from(user);
 
     let token = jsonwebtoken::encode(
@@ -42,7 +42,7 @@ pub fn issue(user: User) -> Token {
         &EncodingKey::from_secret(get_secret().as_bytes())
     ).unwrap();
 
-    Token { token }
+    serde_json::to_string(&Token { token }).unwrap()
 }
 
 pub fn validate(token: &str) -> bool {
