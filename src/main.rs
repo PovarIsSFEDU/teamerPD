@@ -33,7 +33,8 @@ async fn launch() -> Rocket<Build> {
             pages::team_by_id,
             pages::teams,
             pages::my_team,
-            pages::admin_team
+            pages::admin_team,
+            pages::profile
         ])
         .mount("/api", routes![
             api::authenticate,
