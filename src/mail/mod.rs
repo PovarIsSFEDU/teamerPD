@@ -1,4 +1,4 @@
-use lettre::{SendableEmail, SmtpClient, SmtpTransport, Transport};
+use lettre::{SmtpClient, SmtpTransport, Transport};
 use lettre::smtp::error::SmtpResult;
 use lettre_email::EmailBuilder;
 
@@ -29,7 +29,7 @@ fn send<S: Into<String>>(email: String, subject: S, link: String) -> SmtpResult 
     if result.is_ok() {
         println!("Email sent")
     } else {
-        println!("Error {:?}", result.unwrap())
+        println!("Error {:?}", result)
     }
 
     result

@@ -10,6 +10,15 @@ use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::{ItemFn, NestedMeta, Meta, AttributeArgs, Lit};
 
+/// Use for routes that require authorization. Must be placed before get/post/etc attributes
+/// #Optional arguments
+/// * `redirect_to`:
+/// Specifies path to redirect to if not authorized
+/// ```rust
+/// #[require_authorization(redirect_to = "/login")] //Does the same as without redirect_to
+/// #[get("/authorized_page")]
+/// fn authorized() { ... }
+/// ```
 #[proc_macro_attribute]
 pub fn require_authorization(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut ast = syn::parse::<ItemFn>(item.clone()).unwrap();
@@ -22,7 +31,7 @@ pub fn require_authorization(attr: TokenStream, item: TokenStream) -> TokenStrea
     let attrs = parse_macro_input!(attr as AttributeArgs);
     let args = attrs.to_vec();
     for arg in args {
-        if let Some(NestedMeta::Meta(Meta::NameValue(meta))) = arg {
+        if let NestedMeta::Meta(Meta::NameValue(meta)) = arg {
             let name = meta.path.to_token_stream().to_string();
             if name == "redirect_to" {
                 if let Lit::Str(path) = &meta.lit {
