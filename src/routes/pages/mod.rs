@@ -6,7 +6,7 @@ use crate::auth::Validator;
 
 const PATH: &str = "resources/";
 
-#[get("/<file..>")]
+#[get("/<file..>", rank = 2)]
 pub async fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new(PATH).join(file)).await.ok()
 }
@@ -19,34 +19,26 @@ pub async fn login() -> Page {
     html_from_file(PATH, "templates/login.html")
 }
 
+#[require_authorization]
 #[get("/team/<id>")]
-pub async fn team_by_id(validator: Validator, id: i32) -> Result<Page, Redirect> {
-    match validator.validated {
-        true => Ok(html_from_file(PATH, "templates/team.html")),
-        false => Err(Redirect::to(uri!("/login")))
-    }
+pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
+    Ok(html_from_file(PATH, "templates/team.html"))
 }
 
+#[require_authorization]
 #[get("/teams")]
-pub async fn teams(validator: Validator) -> Result<Page, Redirect> {
-    match validator.validated {
-        true => Ok(html_from_file(PATH, "templates/teams.html")),
-        false => Err(Redirect::to(uri!("/login")))
-    }
+pub async fn teams() -> Result<Page, Redirect> {
+    Ok(html_from_file(PATH, "templates/teams.html"))
 }
 
+#[require_authorization]
 #[get("/myteam")]
-pub async fn my_team(validator: Validator) -> Result<Page, Redirect> {
-    match validator.validated {
-        true => Ok(html_from_file(PATH, "templates/team.html")),
-        false => Err(Redirect::to(uri!("/login")))
-    }
+pub async fn my_team() -> Result<Page, Redirect> {
+    Ok(html_from_file(PATH, "templates/team.html"))
 }
 
+#[require_authorization]
 #[get("/admteam")]
-pub async fn admin_team(validator: Validator) -> Result<Page, Redirect> {
-    match validator.validated {
-        true => Ok(html_from_file(PATH, "templates/team.html")),
-        false => Err(Redirect::to(uri!("/login")))
-    }
+pub async fn admin_team() -> Result<Page, Redirect> {
+    Ok(html_from_file(PATH, "templates/team.html"))
 }

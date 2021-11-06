@@ -1,9 +1,11 @@
 use mongodb::Client;
 use mongodb::bson::doc;
-use crate::database::{RegisterResult, LoginResult, User};
+use crate::database::{RegisterResult, LoginResult, User, VerificationError, DatabaseError};
 use crate::auth::{RegistrationData, LoginData};
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use std::marker::Send;
+use crate::database::dbinsert::DbInsert;
 
 pub struct MongoDriver {
     client: Client
@@ -35,9 +37,10 @@ impl MongoDriver {
     }
 
     pub async fn register(&self, data: RegistrationData) -> Result<User, RegisterResult> {
-        let db = self.client.database("user").collection::<User>("login");
+        let db = self.client.database("user").collection::<DbInsert>("login");
         let user = User::from(data);
-        let result = db.insert_one(user.clone(), None).await;
+        let insert = DbInsert::from(user.clone());
+        let result = db.insert_one(insert, None).await;
 
         match result {
             Ok(_) => Ok(user),
@@ -63,10 +66,37 @@ impl MongoDriver {
         }
     }
 
+    pub async fn verify_email(&self, key: String) -> Result<(), VerificationError> {
+        let collection = self.client.database("user").collection::<LoginData>("login");
+
+        let filter = doc! {"verification_key": key, "is_verified": false};
+        let modification = doc! {"$set": {"is_verified": true}, "$unset": {"verification_key": ""}};
+
+        let result = collection.update_one(filter, modification, None).await;
+
+        match result {
+            Ok(result) if result.matched_count > 0 => Ok(()),
+            Ok(_) => Err(VerificationError::AlreadyVerified),
+            Err(_) => Err(VerificationError::Other)
+        }
+    }
+
+    pub async fn get_verification_link(&self, login: String) -> Result<(String, String), DatabaseError> {
+        #[derive(Deserialize)]
+        struct VKey { #[serde(alias = "verification_key")] value: String, email: String }
+
+        let key = self.get::<VKey>("login", &login).await;
+        match key {
+            Ok(Some(key)) => Ok((key.email, key.value)),
+            Ok(None) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
     async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
     {
         let db = self.client.database("user").collection::<T>("login");
-        db.find_one(doc! {field: value}, None).await
+        db.find_one(doc! {field: value.to_string()}, None).await
     }
 }

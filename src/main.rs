@@ -1,10 +1,16 @@
+#![feature(trace_macros)]
+#![feature(log_syntax)]
+
 mod prelude;
 mod routes;
 mod auth;
 mod database;
+mod mail;
 
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate teamer_proc_macro;
 
 use rocket::{Rocket, Build};
 use crate::routes::{pages, api};
@@ -13,6 +19,13 @@ use mongodb::options::ClientOptions;
 use mongodb::Client;
 use toml::Value;
 use std::fs;
+
+#[cfg(debug_assertions)]
+pub const DOMAIN: &str = "http://127.0.0.1:8000";
+
+//Change when actual domain is known
+#[cfg(not(debug_assertions))]
+pub const DOMAIN: &str = "http://127.0.0.1:8000";
 
 #[launch]
 async fn launch() -> Rocket<Build> {
@@ -33,11 +46,13 @@ async fn launch() -> Rocket<Build> {
             pages::team_by_id,
             pages::teams,
             pages::my_team,
-            pages::admin_team
+            pages::admin_team,
+            api::verify,
         ])
         .mount("/api", routes![
             api::authenticate,
-            api::register
+            api::register,
+            api::get_verification_link
         ])
         .mount("/", routes![pages::files])
 }
