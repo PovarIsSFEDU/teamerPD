@@ -65,12 +65,14 @@ pub async fn verify(key: String, user: String, db: &State<MongoDriver>) -> Statu
 
 #[get("/send_verification?<user>")]
 pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Result<Status, Custom<&str>> {
-    let key = db.get_verification_key(user).await;
+    let key = db.get_verification_key(user.clone()).await;
     match key {
         Ok(key) => {
             let mut uri = DOMAIN.to_owned();
             uri.push_str("/verify?key=");
             uri.push_str(key.1.as_str());
+            uri.push_str("&user=");
+            uri.push_str(user.as_str());
             //Uncomment when SMTP is working
             //mail::send_email_verification(key.0, uri);
             Ok(Status::Ok)
@@ -84,9 +86,9 @@ pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Re
     }
 }
 
-#[post("/recover?<key>", data = "<user>")]
-pub async fn recover_password(key: String, user: LoginData, db: &State<MongoDriver>) -> Status {
-    let result = db.validate_recovery(key, user).await;
+#[post("/recover?<key>", data = "<data>")]
+pub async fn recover_password(key: String, data: LoginData, db: &State<MongoDriver>) -> Status {
+    let result = db.validate_recovery(key, data).await;
 
     match result {
         Ok(_) => Status::Ok,
@@ -112,6 +114,8 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
             let mut link = DOMAIN.to_owned();
             link.push_str("/recover?key=");
             link.push_str(key.as_str());
+            link.push_str("&user=");
+            link.push_str(user.login());
 
             let result = db.set_recovery_key(&user, &key).await;
 

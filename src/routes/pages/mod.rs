@@ -42,3 +42,8 @@ pub async fn my_team() -> Result<Page, Redirect> {
 pub async fn admin_team() -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
+
+#[get("/recover")]
+pub async fn recover_password() -> Page {
+    html_from_file(PATH, "templates/recover.html")
+}
