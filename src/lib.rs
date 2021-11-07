@@ -14,11 +14,6 @@ use syn::{ItemFn, NestedMeta, Meta, AttributeArgs, Lit};
 /// #Optional arguments
 /// * `redirect_to`:
 /// Specifies path to redirect to if not authorized
-/// ```rust
-/// #[require_authorization(redirect_to = "/login")] //Does the same as without redirect_to
-/// #[get("/authorized_page")]
-/// fn authorized() { ... }
-/// ```
 #[proc_macro_attribute]
 pub fn require_authorization(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut ast = syn::parse::<ItemFn>(item.clone()).unwrap();
