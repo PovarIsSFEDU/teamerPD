@@ -1,11 +1,9 @@
-#![feature(trace_macros)]
-#![feature(log_syntax)]
-
 mod prelude;
 mod routes;
 mod auth;
 mod database;
 mod mail;
+mod crypto;
 
 #[macro_use]
 extern crate rocket;
@@ -48,11 +46,13 @@ async fn launch() -> Rocket<Build> {
             pages::my_team,
             pages::admin_team,
             api::verify,
+            api::recover_password
         ])
         .mount("/api", routes![
             api::authenticate,
             api::register,
-            api::get_verification_link
+            api::send_verification_link,
+            api::send_password_recovery
         ])
         .mount("/", routes![pages::files])
 }

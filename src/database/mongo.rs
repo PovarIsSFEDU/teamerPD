@@ -1,7 +1,8 @@
-use mongodb::Client;
+use mongodb::{Client, Collection};
 use mongodb::bson::doc;
 use crate::database::{RegisterResult, LoginResult, User, VerificationError, DatabaseError};
 use crate::auth::{RegistrationData, LoginData};
+use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::marker::Send;
@@ -66,10 +67,10 @@ impl MongoDriver {
         }
     }
 
-    pub async fn verify_email(&self, key: String) -> Result<(), VerificationError> {
+    pub async fn verify_email(&self, key: String, login: String) -> Result<(), VerificationError> {
         let collection = self.client.database("user").collection::<LoginData>("login");
 
-        let filter = doc! {"verification_key": key, "is_verified": false};
+        let filter = doc! {"login": login, "verification_key": key, "is_verified": false};
         let modification = doc! {"$set": {"is_verified": true}, "$unset": {"verification_key": ""}};
 
         let result = collection.update_one(filter, modification, None).await;
@@ -81,7 +82,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn get_verification_link(&self, login: String) -> Result<(String, String), DatabaseError> {
+    pub async fn get_verification_key(&self, login: String) -> Result<(String, String), DatabaseError> {
         #[derive(Deserialize)]
         struct VKey { #[serde(alias = "verification_key")] value: String, email: String }
 
@@ -93,10 +94,43 @@ impl MongoDriver {
         }
     }
 
-    async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
+    pub async fn set_recovery_key(&self, user: &RegistrationData, key: &String) -> Result<(), DatabaseError> {
+        let collection = self.get_login_collection::<LoginData>();
+        let filter = doc! {"login": user.login()};
+        let modification = doc! {"$set": {"recovery_key": key}};
+        let update_result = collection.update_one(filter, modification, None).await;
+
+        update_result.map_both(|_| (), |_| DatabaseError::Other)
+    }
+
+    pub async fn validate_recovery(&self, key: String, user: LoginData) -> Result<(), DatabaseError> {
+        let collection = self.get_login_collection::<LoginData>();
+        let filter = doc! {"login": user.login(), "recovery_key": key};
+        let found = collection.find_one(filter.clone(), None).await;
+        match found {
+            Ok(Some(_)) => {
+                let new_pass = bcrypt::hash(user.password(), 5).unwrap();
+                let modification = doc! {"$unset": {"recovery_key": ""}, "$set": {"password": new_pass}};
+                let result = collection.update_one(filter, modification, None).await;
+
+                result.map_both(|_| (), |_| DatabaseError::Other)
+            }
+
+            Ok(None) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
     {
-        let db = self.client.database("user").collection::<T>("login");
+        let db = self.get_login_collection::<T>();
         db.find_one(doc! {field: value.to_string()}, None).await
+    }
+
+    fn get_login_collection<T>(&self) -> Collection<T>
+        where T: DeserializeOwned + Unpin + Send + Sync
+    {
+        self.client.database("user").collection::<T>("login")
     }
 }
