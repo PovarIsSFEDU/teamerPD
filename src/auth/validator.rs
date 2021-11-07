@@ -1,4 +1,3 @@
-use rocket::log::private::logger;
 use rocket::Request;
 use rocket::request::{FromRequest, Outcome};
 use crate::auth::token;

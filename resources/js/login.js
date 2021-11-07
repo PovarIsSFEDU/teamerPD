@@ -11,8 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         sendRequest("POST", "/api/register", _signup)
             .then(data => RedirectFromLogin("/profile", data['token']))
-            .catch(err => console.log(err))
-        console.log(document.cookie)
+            .catch(err => ThrowError(err))
     })
 
     _button_login.addEventListener("click", () => {
@@ -23,8 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sendRequest("POST", "/api/auth", _login)
             .then(data => RedirectFromLogin("/", data['token']))
-            .catch(err => console.log(err))
-        console.log(document.cookie)
+            .catch(err => ThrowError(err))
     })
 
 
