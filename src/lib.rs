@@ -16,7 +16,7 @@ use syn::{ItemFn, NestedMeta, Meta, AttributeArgs, Lit};
 /// Specifies path to redirect to if not authorized
 #[proc_macro_attribute]
 pub fn require_authorization(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let mut ast = syn::parse::<ItemFn>(item.clone()).unwrap();
+    let mut ast = syn::parse::<ItemFn>(item).unwrap();
 
     let arg = quote! {validator: Validator};
     let arg = syn::parse(TokenStream::from(arg)).unwrap();

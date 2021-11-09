@@ -94,7 +94,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_recovery_key(&self, user: &RegistrationData, key: &String) -> Result<(), DatabaseError> {
+    pub async fn set_recovery_key(&self, user: &RegistrationData, key: &str) -> Result<(), DatabaseError> {
         let collection = self.get_login_collection::<LoginData>();
         let filter = doc! {"login": user.login()};
         let modification = doc! {"$set": {"recovery_key": key}};
