@@ -23,7 +23,7 @@ pub const DOMAIN: &str = "http://127.0.0.1:8000";
 
 //Change when actual domain is known
 #[cfg(not(debug_assertions))]
-pub const DOMAIN: &str = "http://127.0.0.1:8000";
+pub const DOMAIN: &str = "http://teamer.firon.org";
 
 #[launch]
 async fn launch() -> Rocket<Build> {
