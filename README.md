@@ -11,5 +11,6 @@
       <img src="https://user-images.githubusercontent.com/74973533/138591946-ed937d4b-9644-47c4-9b1a-5df20c607976.jpg">
     </div>
     <div><a href="https://www.figma.com/file/YjgZwSChGAehiUkVhqkaY4/Untitled?node-id=10%3A14">Ссылка</a> на дизайн. Автор - Анастасия <i>Nathanbaber</i> Глухих</div>
+    <div><a href="https://hub.docker.com/r/povar/teamer/tags">Ссылка</a> на готовые к развертке образы (Docker). Автор - Павел <i>povar</i> Лукаш</div>
 </body>
 </html>
