@@ -1,8 +1,9 @@
-use crate::auth::{RegistrationData, LoginData, token};
-use crate::database::{LoginResult, MongoDriver, RegisterResult};
+use crate::auth::{token, LoginData, RegistrationData};
+use crate::database::{DatabaseError, LoginResult, MongoDriver, RegisterResult, VerificationError};
+use crate::{crypto, mail, DOMAIN};
 use rocket::http::Status;
-use rocket::State;
 use rocket::response::status::Custom;
+use rocket::State;
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -21,7 +22,7 @@ pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Cus
             Custom(Status::NotFound, "User with given login does not exist".to_owned()),
 
         Err(LoginResult::Other) =>
-            Custom(Status::InternalServerError, "Internal Server Error".to_owned()),
+            Custom(Status::InternalServerError, "Internal Server Error".to_owned())
     }
 }
 
@@ -48,5 +49,85 @@ pub async fn register(registration_data: RegistrationData, db: &State<MongoDrive
         }
 
         Err(_) => Custom(Status::InternalServerError, "Internal Server Error".to_owned())
+    }
+}
+
+#[get("/verify?<key>&<user>")]
+pub async fn verify(key: String, user: String, db: &State<MongoDriver>) -> Status {
+    let result = db.verify_email(key, user).await;
+
+    match result {
+        Ok(_) => Status::Ok,
+        Err(VerificationError::AlreadyVerified) => Status::Conflict,
+        Err(VerificationError::Other) => Status::InternalServerError,
+    }
+}
+
+#[get("/send_verification?<user>")]
+pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Result<Status, Custom<&str>> {
+    let key = db.get_verification_key(user.clone()).await;
+    match key {
+        Ok(key) => {
+            let mut uri = DOMAIN.to_owned();
+            uri.push_str("/verify?key=");
+            uri.push_str(key.1.as_str());
+            uri.push_str("&user=");
+            uri.push_str(user.as_str());
+            //Uncomment when SMTP is working
+            //mail::send_email_verification(key.0, uri);
+            Ok(Status::Ok)
+        }
+
+        Err(DatabaseError::NotFound) => Err(Custom(Status::NotFound, "User or key not found")),
+
+        Err(DatabaseError::Other) => {
+            Err(Custom(Status::InternalServerError, "Internal Server Error"))
+        }
+    }
+}
+
+#[post("/recover?<key>", data = "<data>")]
+pub async fn recover_password(key: String, data: LoginData, db: &State<MongoDriver>) -> Status {
+    let result = db.validate_recovery(key, data).await;
+
+    match result {
+        Ok(_) => Status::Ok,
+        Err(DatabaseError::NotFound) => Status::NotFound,
+        Err(DatabaseError::Other) => Status::InternalServerError,
+    }
+}
+
+#[get("/send_recovery?<user>")]
+pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Result<Status, Custom<&str>> {
+    let user = db.get::<RegistrationData>("login", &user).await;
+
+    match user {
+        Ok(None) => Err(Custom(Status::NotFound, "User with given login not found")),
+        Err(_) => Err(Custom(Status::InternalServerError, "Internal Server Error")),
+
+        Ok(Some(user)) => {
+            let mut key = user.login().clone();
+            key.push_str(user.email().as_str());
+            key.push_str(user.password().as_str());
+            let key = crypto::hash(key.as_bytes());
+
+            let mut link = DOMAIN.to_owned();
+            link.push_str("/recover?key=");
+            link.push_str(key.as_str());
+            link.push_str("&user=");
+            link.push_str(user.login());
+
+            let result = db.set_recovery_key(&user, &key).await;
+
+            match result {
+                Ok(_) => {
+                    //mail::send_recovery(user.email().clone(), link);
+                    Ok(Status::Ok)
+                }
+
+                Err(DatabaseError::NotFound) => Err(Custom(Status::NotFound, "Could not set key: user not found")),
+                Err(DatabaseError::Other) => Err(Custom(Status::InternalServerError, "Could not set key: Internal error"))
+            }
+        }
     }
 }
