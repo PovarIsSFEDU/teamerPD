@@ -53,7 +53,8 @@ async fn launch() -> Rocket<Build> {
             api::authenticate,
             api::register,
             api::send_verification_link,
-            api::send_password_recovery
+            api::send_password_recovery,
+            api::upload
         ])
         .mount("/", routes![pages::files])
 }

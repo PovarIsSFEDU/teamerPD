@@ -15,7 +15,13 @@ impl<'r> FromRequest<'r> for Validator {
 
         match token {
             None => Outcome::Success(Validator {validated: false}),
-            Some(token) => Outcome::Success(Validator {validated: token::validate(token)})
+            Some(token) => {
+                let validation = token::validate(token);
+                match validation {
+                    Ok(_) => Outcome::Success(Validator { validated: true }),
+                    Err(_) => Outcome::Success(Validator { validated: false })
+                }
+            }
         }
     }
 }
