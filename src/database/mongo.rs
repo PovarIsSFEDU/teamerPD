@@ -144,7 +144,8 @@ impl MongoDriver {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
-            UserDataType::Resume => "resume"
+            UserDataType::Resume => "resume",
+            UserDataType::TeamName => "team"
         };
 
         let filter = doc! {"name": user};

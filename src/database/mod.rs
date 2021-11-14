@@ -30,6 +30,7 @@ pub enum DatabaseError {
 
 pub enum UserDataType {
     Photo,
+    TeamName,
     Resume
 }
 

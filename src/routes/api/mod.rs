@@ -245,9 +245,11 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
             match err {
                 GetTeamResult::NotInTeam => {
                     let res = db.create_team(TeamType::Hackathon, &team_name, captain).await;
+
                     match res {
                         Ok(team) => {
                             println!("{} created!", team.name);
+                            db.set_user_data(UserDataType::TeamName, captain, &team_name).await;
                             return Status::Ok
                         }
                         Err(err) => {
