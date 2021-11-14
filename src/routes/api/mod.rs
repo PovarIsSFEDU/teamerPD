@@ -7,6 +7,7 @@ use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
+use crate::prelude;
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -140,72 +141,101 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
     }
 }
 
-#[post("/upload?<u_type>", data = "<file>")]
-pub async fn upload(token: Token, u_type: &str, mut file: TempFile<'_>, db: &State<MongoDriver>) -> Custom<()> {
-    let name = file.name().unwrap().to_owned();
-    let ext = name
-        .split('.')
-        .collect::<Vec<&str>>()
-        .last()
-        .unwrap()
-        .to_lowercase();
+#[post("/upload_user?<u_type>", data = "<file>")]
+pub async fn upload_user(token: Token, u_type: &str, mut file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
+    let (name, ext) = generate_upload_name(&token.claims.iss, &file);
     let ext = ext.as_str();
-    let name = crypto::hash(token.claims.iss.as_bytes());
-    let name = format!("{}.{}", name, ext);
+    let (file_name, data_type, user);
 
     match u_type {
-        t @ ("profile_photo" | "team_logo") => {
+        "profile_photo" => {
             if let "jpg" | "jpeg" | "png" | "gif" = ext {
-                match t {
-                    "profile_photo" => {
-                        let name = format!("photo_{}", name);
-                        file.persist_to(Path::new("uploads/").join(name.clone())).await;
-                        db
-                            .set_user_data(
-                                UserDataType::Photo,
-                                &token.claims.iss,
-                                &name,
-                            )
-                            .await;
-                        Custom(Status::Ok, ())
-                    }
-                    "team_logo" => {
-                        let name = format!("logo_{}", name);
-                        file.persist_to(Path::new("uploads/").join(name.clone())).await;
-                        db
-                            .set_team_data(
-                                TeamDataType::Logo,
-                                &token.claims.team.unwrap(),
-                                &name
-                            )
-                            .await;
-                        Custom(Status::Ok, ())
-                    }
-                    _ => { Custom(Status::InternalServerError, ()) }
-                }
+                file_name = format!("photo_{}", name);
+                data_type = UserDataType::Photo;
+                user = &token.claims.iss;
             } else {
-                Custom(Status::NotAcceptable, ())
+                return Status::NotAcceptable;
             }
         }
 
         "resume" => {
             if let "doc" | "docx" | "pdf" = ext {
-                let name = format!("resume_{}", name);
-                file.persist_to(Path::new("uploads/").join(name.clone())).await;
-                db
-                    .set_user_data(
-                        UserDataType::Resume,
-                        &token.claims.iss,
-                        &name
-                    )
-                    .await;
-                Custom(Status::Ok, ())
+                file_name = format!("resume_{}", name);
+                data_type = UserDataType::Resume;
+                user = &token.claims.iss;
             } else {
-                Custom(Status::NotAcceptable, ())
+                return Status::NotAcceptable;
             }
         }
-        _ => {
-            Custom(Status::BadRequest, ())
-        }
+        _ => return Status::BadRequest
     }
+
+    let write_result = file
+        .persist_to(
+            Path::new("uploads/")
+                .join(file_name.clone())
+        )
+        .await;
+    if let Err(_) = write_result {
+        return Status::InternalServerError;
+    }
+
+    let db_result = db
+        .set_user_data(data_type, user, &file_name)
+        .await;
+
+    match db_result {
+        Ok(_) => Status::Ok,
+        Err(DatabaseError::NotFound) => Status::NotFound,
+        Err(DatabaseError::Other) => Status::InternalServerError
+    }
+}
+
+#[post("/upload_team?<u_type>", data = "<file>")]
+pub async fn upload_team(token: Token, u_type: &str, mut file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
+    let (name, ext) = generate_upload_name(&token.claims.team.clone().unwrap(), &file);
+    let ext = ext.as_str();
+    let (file_name, data_type, team);
+
+    match u_type {
+        "logo" => {
+            if let "jpg" | "jpeg" | "png" | "gif" = ext {
+                file_name = format!("logo_{}", name);
+                data_type = TeamDataType::Logo;
+                team = token.claims.team.unwrap();
+            } else {
+                return Status::NotAcceptable
+            }
+        }
+
+        _ => return Status::BadRequest
+    }
+
+    let write_result = file
+        .persist_to(
+            Path::new("uploads/")
+                .join(file_name.clone())
+        )
+        .await;
+
+    if let Err(_) = write_result {
+        return Status::InternalServerError;
+    }
+
+    let db_result = db
+        .set_team_data(data_type, &team, &file_name)
+        .await;
+
+    match db_result {
+        Ok(_) => Status::Ok,
+        Err(DatabaseError::NotFound) => Status::NotFound,
+        Err(DatabaseError::Other) => Status::InternalServerError
+    }
+}
+
+fn generate_upload_name(owner: &String, file: &TempFile<'_>) -> (String, String) {
+    let name = file.name().unwrap().to_owned();
+    let ext = prelude::get_ext(name);
+    let name = crypto::hash(owner.as_bytes());
+    (format!("{}.{}", name, ext), ext)
 }

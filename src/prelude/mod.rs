@@ -17,6 +17,15 @@ pub fn html_from_file(path: &str, name: &str) -> Page {
     Html(result.ok())
 }
 
+pub fn get_ext(name: String) -> String {
+    name
+        .split('.')
+        .collect::<Vec<&str>>()
+        .last()
+        .unwrap()
+        .to_lowercase()
+}
+
 pub trait MapBoth<T, E> {
     fn map_both<F, U, F1, E1>(self, ok: F, err: F1) -> Result<U, E1>
         where F: FnOnce(T) -> U,
