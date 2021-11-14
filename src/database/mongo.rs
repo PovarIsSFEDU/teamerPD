@@ -1,6 +1,6 @@
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
-use crate::database::{RegistrationResult, LoginResult, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationResult};
+use crate::database::{RegistrationResult, LoginResult, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationResult, GetTeamResult};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
@@ -175,21 +175,23 @@ impl MongoDriver {
             Err(_) => Err(DatabaseError::Other)
         }
     }
-    pub async fn get_user_team(&self, team_type: TeamType, username:&String) -> Option<String> {
+    pub async fn get_user_team(&self, team_type: TeamType, username:&String) -> Result<String, GetTeamResult> {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"name": username};
         let result = collection.find_one(filter, None).await;
         match result {
             Ok(result) => {
                 match result {
-                    None => {None}
-                    Some(result) => {
-                        result.team
+                    None => {return Result::Err(GetTeamResult::NotFound)}
+                    Some(user) => {
+                        match user.team {
+                            Option::None => {return  Result::Err(GetTeamResult::NotInTeam)}
+                            Option::Some(team) => {return Result::Ok(team)}
+                        }
                     }
                 }
             }
-            Result::Err(_) => None,
-            //Err(_) => Err(DatabaseError::Other)
+            Err(err) => {return Result::Err(GetTeamResult::Other)}
         }
     }
     pub async fn create_team(&self, team_type:TeamType, team_name:&String, captain: &String ) -> Result<Team, TeamCreationResult> {

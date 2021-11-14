@@ -43,3 +43,10 @@ pub enum TeamCreationResult {
     Exists,
     Other
 }
+
+pub enum GetTeamResult {
+    Ok,
+    NotInTeam,
+    NotFound,
+    Other
+}

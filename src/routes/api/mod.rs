@@ -1,7 +1,7 @@
 use std::path::Path;
 use rocket::fs::TempFile;
 use crate::auth::{token, LoginData, RegistrationData, Validator};
-use crate::database::{DatabaseError, LoginResult, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationResult};
+use crate::database::{DatabaseError, LoginResult, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationResult, GetTeamResult};
 use crate::{crypto, mail, DOMAIN};
 use rocket::http::Status;
 use rocket::response::status::Custom;
@@ -241,25 +241,33 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
     println!("{}",captain);
     let check = db.get_user_team(TeamType::Hackathon, captain).await;
     match check {
-        None => {
-            let res = db.create_team(TeamType::Hackathon, &team_name, captain ).await;
-            match res {
-                Ok(team) => {
-                    println!("{} created!", team.name);
-                    return  Status::Ok
-                }
-                Err(err) => {
-                    match err {
-                        TeamCreationResult::Ok => {return  Status::Ok}
-                        TeamCreationResult::Exists => {return  Status::BadRequest}
-                        TeamCreationResult::Other => {
-                            println!("Error in creating team");
-                            return Status::InternalServerError}
+        Result::Err(err) => {
+            match err {
+                GetTeamResult::NotInTeam => {
+                    let res = db.create_team(TeamType::Hackathon, &team_name, captain).await;
+                    match res {
+                        Ok(team) => {
+                            println!("{} created!", team.name);
+                            return Status::Ok
+                        }
+                        Err(err) => {
+                            match err {
+                                TeamCreationResult::Ok => { return Status::Ok }
+                                TeamCreationResult::Exists => { return Status::BadRequest }
+                                TeamCreationResult::Other => {
+                                    println!("Error in creating team");
+                                    return Status::InternalServerError
+                                }
+                            }
+                        }
                     }
                 }
+                GetTeamResult::Ok => {return Status::BadRequest}
+                GetTeamResult::NotFound => {return Status::BadRequest}
+                GetTeamResult::Other => {return Status::BadRequest}
             }
         }
-        Some(str) => {return Status::BadRequest}
+        Ok(_) => {return Status::BadRequest}
     }
     Status::NotImplemented
 }
