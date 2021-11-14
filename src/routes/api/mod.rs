@@ -1,13 +1,14 @@
 use std::path::Path;
 use rocket::fs::TempFile;
 use crate::auth::{token, LoginData, RegistrationData, Validator};
-use crate::database::{DatabaseError, LoginResult, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError};
+use crate::database::{DatabaseError, LoginResult, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationResult};
 use crate::{crypto, mail, DOMAIN};
 use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
 use crate::prelude;
+use crate::teams::{TeamType};
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -233,9 +234,40 @@ pub async fn upload_team(token: Token, u_type: &str, mut file: TempFile<'_>, db:
     }
 }
 
+#[post("/create_team?<team_name>")]
+pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver>) -> Status
+{
+    let captain = &token.claims.iss.clone();
+    println!("{}",captain);
+    let check = db.get_user_team(TeamType::Hackathon, captain).await;
+    match check {
+        None => {
+            let res = db.create_team(TeamType::Conference, &team_name, captain ).await;
+            match res {
+                Ok(team) => {
+                    println!("{} created!", team.name);
+                    return  Status::Ok
+                }
+                Err(err) => {
+                    match err {
+                        TeamCreationResult::Ok => {return  Status::Ok}
+                        TeamCreationResult::Exists => {return  Status::BadRequest}
+                        TeamCreationResult::Other => {
+                            println!("Error in creating team");
+                            return Status::InternalServerError}
+                    }
+                }
+            }
+        }
+        Some(str) => {return Status::BadRequest}
+    }
+    Status::NotImplemented
+}
+
 fn generate_upload_name(owner: &String, file: &TempFile<'_>) -> (String, String) {
     let name = file.name().unwrap().to_owned();
     let ext = prelude::get_ext(name);
     let name = crypto::hash(owner.as_bytes());
     (format!("{}.{}", name, ext), ext)
 }
+

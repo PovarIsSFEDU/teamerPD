@@ -1,6 +1,6 @@
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
-use crate::database::{RegistrationResult, LoginResult, User, VerificationError, DatabaseError, UserDataType, TeamDataType};
+use crate::database::{RegistrationResult, LoginResult, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationResult};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::marker::Send;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
-
+use crate::teams::TeamType;
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 pub struct MongoDriver {
@@ -175,6 +175,46 @@ impl MongoDriver {
             Err(_) => Err(DatabaseError::Other)
         }
     }
+    pub async fn get_user_team(&self, team_type: TeamType, username:&String) -> Option<String> {
+        let collection = self.client.database("user").collection::<User>("users");
+        let filter = doc! {"name": username};
+        let result = collection.find_one(filter, None).await;
+        match result {
+            Ok(result) => {
+                match result {
+                    None => {None}
+                    Some(result) => {
+                        result.team
+                    }
+                }
+            }
+            Result::Err(_) => None,
+            //Err(_) => Err(DatabaseError::Other)
+        }
+    }
+    pub async fn create_team(&self, team_type:TeamType, team_name:&String, captain: &String ) -> Result<Team, TeamCreationResult> {
+        let db = self.client.database("teams").collection::<Team>("teams");
+        let insert = Team{
+            name: team_name.clone(),
+            logo: None,
+            captain: captain.to_string(),
+            members: vec![captain.to_string()]
+        };
+        let result = db
+            .insert_one(insert, None)
+            .await;
+        match result {
+            Result::Ok(_) => {Result::Ok(Team{
+                name: team_name.clone(),
+                logo: None,
+                captain: captain.to_string(),
+                members: vec![captain.to_string()]
+            })}
+            Result::Err(_) => {Result::Err(TeamCreationResult::Other)}
+        }
+
+    }
+
 
     pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync

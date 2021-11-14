@@ -4,6 +4,7 @@ mod auth;
 mod database;
 mod mail;
 mod crypto;
+mod teams;
 
 #[macro_use]
 extern crate rocket;
@@ -55,7 +56,8 @@ async fn launch() -> Rocket<Build> {
             api::send_verification_link,
             api::send_password_recovery,
             api::upload_user,
-            api::upload_team
+            api::upload_team,
+            api::create_team
         ])
         .mount("/", routes![pages::files])
 }

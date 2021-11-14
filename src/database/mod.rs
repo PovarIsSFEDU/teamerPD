@@ -37,3 +37,9 @@ pub enum TeamDataType {
     Name,
     Logo
 }
+
+pub enum TeamCreationResult {
+    Ok,
+    Exists,
+    Other
+}
