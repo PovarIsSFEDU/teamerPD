@@ -242,7 +242,7 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
     let check = db.get_user_team(TeamType::Hackathon, captain).await;
     match check {
         None => {
-            let res = db.create_team(TeamType::Conference, &team_name, captain ).await;
+            let res = db.create_team(TeamType::Hackathon, &team_name, captain ).await;
             match res {
                 Ok(team) => {
                     println!("{} created!", team.name);

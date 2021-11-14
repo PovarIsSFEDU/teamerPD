@@ -200,6 +200,7 @@ impl MongoDriver {
             captain: captain.to_string(),
             members: vec![captain.to_string()]
         };
+        //TODO: Сделать проверку наличия комманды с таким же названием
         let result = db
             .insert_one(insert, None)
             .await;
