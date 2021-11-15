@@ -1,6 +1,7 @@
 pub mod request;
 pub mod concat;
 
+pub use concat::Concatenate;
 use rocket::fs::NamedFile;
 use rocket::response::content::Html;
 use rocket::futures::executor;
@@ -18,7 +19,7 @@ pub fn html_from_file(path: &str, name: &str) -> Page {
     Html(result.ok())
 }
 
-pub fn get_ext(name: &String) -> String {
+pub fn get_ext(name: &str) -> String {
     name
         .split('.')
         .collect::<Vec<&str>>()
@@ -27,13 +28,13 @@ pub fn get_ext(name: &String) -> String {
         .to_lowercase()
 }
 
-pub fn is_image(name: &String) -> bool {
+pub fn is_image(name: &str) -> bool {
     let ext = get_ext(name);
     let ext = ext.as_str();
     matches_extension(ext, ["jpg", "jpeg", "png", "gif"])
 }
 
-pub fn is_doc(name: &String) -> bool {
+pub fn is_doc(name: &str) -> bool {
     let ext = get_ext(name);
     let ext = ext.as_str();
     matches_extension(ext, ["doc", "docx", "pdf"])

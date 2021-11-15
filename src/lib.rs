@@ -69,7 +69,7 @@ pub fn on_auth_failed(item: TokenStream) -> TokenStream {
     let body = body.as_str();
     let mut condition = "if !validator.validated {".to_owned();
     condition.push_str(body);
-    condition.push_str("}");
+    condition.push('}');
 
     condition.parse().unwrap()
 }

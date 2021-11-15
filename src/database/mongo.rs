@@ -140,7 +140,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_user_data(&self, data_type: UserDataType, user: &String, file_name: &String) -> DatabaseOperationResult {
+    pub async fn set_user_data(&self, data_type: UserDataType, user: &str, file_name: &str) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
@@ -158,7 +158,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_team_data(&self, data_type: TeamDataType, name: &String, file_name: &String) -> DatabaseOperationResult {
+    pub async fn set_team_data(&self, data_type: TeamDataType, name: &str, file_name: &str) -> DatabaseOperationResult {
         let collection = self.client.database("teams").collection::<Team>("teams");
         let parameter = match data_type {
             TeamDataType::Name => "name",
