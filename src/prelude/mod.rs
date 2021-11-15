@@ -1,4 +1,5 @@
 pub mod request;
+pub mod concat;
 
 use rocket::fs::NamedFile;
 use rocket::response::content::Html;
@@ -17,13 +18,22 @@ pub fn html_from_file(path: &str, name: &str) -> Page {
     Html(result.ok())
 }
 
-pub fn get_ext(name: String) -> String {
+pub fn get_ext(name: &String) -> String {
     name
         .split('.')
         .collect::<Vec<&str>>()
         .last()
         .unwrap()
         .to_lowercase()
+}
+
+pub fn is_image_ext(ext: &str) -> bool {
+
+    matches_extension(ext, ["jpg", "jpeg", "png", "gif"])
+}
+
+pub fn is_doc_ext(ext: &str) -> bool {
+    matches_extension(ext, ["doc", "docx", "pdf"])
 }
 
 pub trait MapBoth<T, E> {
@@ -42,4 +52,14 @@ impl<T, E> MapBoth<T, E> for Result<T, E> {
             Err(res) => Err(err(res))
         }
     }
+}
+
+fn matches_extension(ext: &str, exts: impl IntoIterator<Item = &'static str>) -> bool {
+    for e in IntoIterator::into_iter(exts) {
+        if e == ext {
+            return true;
+        }
+    }
+
+    false
 }

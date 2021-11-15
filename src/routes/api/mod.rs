@@ -7,7 +7,8 @@ use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
-use crate::prelude;
+use crate::prelude::*;
+use crate::prelude::concat::Concatenate;
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -77,11 +78,12 @@ pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Re
     let key = db.get_verification_key(user.clone()).await;
     match key {
         Ok(key) => {
-            let mut link = DOMAIN.to_owned();
-            link.push_str("/verify?key=");
-            link.push_str(key.1.as_str());
-            link.push_str("&user=");
-            link.push_str(user.as_str());
+            let link = DOMAIN
+                .concat("/verify?key=")
+                .concat(key.1)
+                .concat("&user=")
+                .concat(user)
+                .to_string();
             //Uncomment when SMTP is working
             //mail::send_email_verification(key.0, link);
             Ok(Status::Ok)
@@ -115,16 +117,18 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
         Err(_) => Err(Custom(Status::InternalServerError, "Internal Server Error")),
 
         Ok(Some(user)) => {
-            let mut key = user.login().clone();
-            key.push_str(user.email().as_str());
-            key.push_str(user.password().as_str());
+            let key = user.login()
+                .concat(user.email())
+                .concat(user.password())
+                .to_string();
             let key = crypto::hash_unique(key);
 
-            let mut link = DOMAIN.to_owned();
-            link.push_str("/recover?key=");
-            link.push_str(key.as_str());
-            link.push_str("&user=");
-            link.push_str(user.login());
+            let link = DOMAIN
+                .concat("/recover?key=")
+                .concat(key.as_str())
+                .concat("&user=")
+                .concat(user.login())
+                .to_string();
 
             let result = db.set_recovery_key(&user, &key).await;
 
@@ -142,44 +146,40 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 }
 
 #[post("/upload_user?<u_type>", data = "<file>")]
-pub async fn upload_user(token: Token, u_type: &str, mut file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
+pub async fn upload_user(token: Token, u_type: &str, file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
     let (name, ext) = generate_upload_name(&token.claims.iss, &file);
     let ext = ext.as_str();
-    let (file_name, data_type, user);
+    let (file_name, data_type);
 
     match u_type {
         "profile_photo" => {
-            if let "jpg" | "jpeg" | "png" | "gif" = ext {
-                file_name = format!("photo_{}", name);
-                data_type = UserDataType::Photo;
-                user = &token.claims.iss;
-            } else {
+            if !is_image_ext(ext) {
                 return Status::NotAcceptable;
             }
+
+            file_name = format!("photo_{}", name);
+            data_type = UserDataType::Photo;
         }
 
         "resume" => {
-            if let "doc" | "docx" | "pdf" = ext {
-                file_name = format!("resume_{}", name);
-                data_type = UserDataType::Resume;
-                user = &token.claims.iss;
-            } else {
+            if !is_doc_ext(ext) {
                 return Status::NotAcceptable;
             }
+
+            file_name = format!("resume_{}", name);
+            data_type = UserDataType::Resume;
         }
+
         _ => return Status::BadRequest
     }
 
-    let write_result = file
-        .persist_to(
-            Path::new("uploads/")
-                .join(file_name.clone())
-        )
-        .await;
+    let write_result = save_upload(file, file_name.clone()).await;
+
     if let Err(_) = write_result {
         return Status::InternalServerError;
     }
 
+    let user = &token.claims.iss;
     let db_result = db
         .set_user_data(data_type, user, &file_name)
         .await;
@@ -192,36 +192,35 @@ pub async fn upload_user(token: Token, u_type: &str, mut file: TempFile<'_>, db:
 }
 
 #[post("/upload_team?<u_type>", data = "<file>")]
-pub async fn upload_team(token: Token, u_type: &str, mut file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
+pub async fn upload_team(token: Token, u_type: &str, file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
+    if token.claims.team.is_none() {
+        return Status::Forbidden
+    }
+
     let (name, ext) = generate_upload_name(&token.claims.team.clone().unwrap(), &file);
     let ext = ext.as_str();
-    let (file_name, data_type, team);
+    let (file_name, data_type);
 
     match u_type {
         "logo" => {
-            if let "jpg" | "jpeg" | "png" | "gif" = ext {
-                file_name = format!("logo_{}", name);
-                data_type = TeamDataType::Logo;
-                team = token.claims.team.unwrap();
-            } else {
+            if !is_image_ext(ext) {
                 return Status::NotAcceptable
             }
+
+            file_name = format!("logo_{}", name);
+            data_type = TeamDataType::Logo;
         }
 
         _ => return Status::BadRequest
     }
 
-    let write_result = file
-        .persist_to(
-            Path::new("uploads/")
-                .join(file_name.clone())
-        )
-        .await;
+    let write_result = save_upload(file, file_name.clone()).await;
 
     if let Err(_) = write_result {
         return Status::InternalServerError;
     }
 
+    let team = token.claims.team.unwrap();
     let db_result = db
         .set_team_data(data_type, &team, &file_name)
         .await;
@@ -235,7 +234,13 @@ pub async fn upload_team(token: Token, u_type: &str, mut file: TempFile<'_>, db:
 
 fn generate_upload_name(owner: &String, file: &TempFile<'_>) -> (String, String) {
     let name = file.name().unwrap().to_owned();
-    let ext = prelude::get_ext(name);
+    let ext = get_ext(&name);
     let name = crypto::hash(owner.as_bytes());
     (format!("{}.{}", name, ext), ext)
+}
+
+async fn save_upload(mut file: TempFile<'_>, name: String) -> std::io::Result<()> {
+    file
+        .persist_to(Path::new("uploads/").join(name))
+        .await
 }
