@@ -146,15 +146,14 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 }
 
 #[post("/upload_user?<u_type>", data = "<file>")]
-pub async fn upload_user(token: Token, u_type: &str, file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
-    let (name, ext) = generate_upload_name(&token.claims.iss, &file);
-    let ext = ext.as_str();
+pub async fn upload_user(token: Token, u_type: &str, file: TempFile<'_>, db: &State<MongoDriver>) -> Custom<()> {
+    let name = generate_upload_name(&token.claims.iss, &file);
     let (file_name, data_type);
 
     match u_type {
         "profile_photo" => {
-            if !is_image_ext(ext) {
-                return Status::NotAcceptable;
+            if !is_image(&name) {
+                return Custom(Status::NotAcceptable, ());
             }
 
             file_name = format!("photo_{}", name);
@@ -162,21 +161,21 @@ pub async fn upload_user(token: Token, u_type: &str, file: TempFile<'_>, db: &St
         }
 
         "resume" => {
-            if !is_doc_ext(ext) {
-                return Status::NotAcceptable;
+            if !is_doc(&name) {
+                return Custom(Status::NotAcceptable, ());
             }
 
             file_name = format!("resume_{}", name);
             data_type = UserDataType::Resume;
         }
 
-        _ => return Status::BadRequest
+        _ => return Custom(Status::BadRequest, ())
     }
 
     let write_result = save_upload(file, file_name.clone()).await;
 
     if let Err(_) = write_result {
-        return Status::InternalServerError;
+        return Custom(Status::InternalServerError, ());
     }
 
     let user = &token.claims.iss;
@@ -185,39 +184,38 @@ pub async fn upload_user(token: Token, u_type: &str, file: TempFile<'_>, db: &St
         .await;
 
     match db_result {
-        Ok(_) => Status::Ok,
-        Err(DatabaseError::NotFound) => Status::NotFound,
-        Err(DatabaseError::Other) => Status::InternalServerError
+        Ok(_) => Custom(Status::Ok, ()),
+        Err(DatabaseError::NotFound) => Custom(Status::NotFound, ()),
+        Err(DatabaseError::Other) => Custom(Status::InternalServerError, ())
     }
 }
 
 #[post("/upload_team?<u_type>", data = "<file>")]
-pub async fn upload_team(token: Token, u_type: &str, file: TempFile<'_>, db: &State<MongoDriver>) -> Status {
+pub async fn upload_team(token: Token, u_type: &str, file: TempFile<'_>, db: &State<MongoDriver>) -> Custom<()> {
     if token.claims.team.is_none() {
-        return Status::Forbidden
+        return Custom(Status::Forbidden, ())
     }
 
-    let (name, ext) = generate_upload_name(&token.claims.team.clone().unwrap(), &file);
-    let ext = ext.as_str();
+    let name = generate_upload_name(&token.claims.team.clone().unwrap(), &file);
     let (file_name, data_type);
 
     match u_type {
         "logo" => {
-            if !is_image_ext(ext) {
-                return Status::NotAcceptable
+            if !is_image(&name) {
+                return Custom(Status::NotAcceptable, ())
             }
 
             file_name = format!("logo_{}", name);
             data_type = TeamDataType::Logo;
         }
 
-        _ => return Status::BadRequest
+        _ => return Custom(Status::BadRequest, ())
     }
 
     let write_result = save_upload(file, file_name.clone()).await;
 
     if let Err(_) = write_result {
-        return Status::InternalServerError;
+        return Custom(Status::InternalServerError, ());
     }
 
     let team = token.claims.team.unwrap();
@@ -226,17 +224,17 @@ pub async fn upload_team(token: Token, u_type: &str, file: TempFile<'_>, db: &St
         .await;
 
     match db_result {
-        Ok(_) => Status::Ok,
-        Err(DatabaseError::NotFound) => Status::NotFound,
-        Err(DatabaseError::Other) => Status::InternalServerError
+        Ok(_) => Custom(Status::Ok, ()),
+        Err(DatabaseError::NotFound) => Custom(Status::NotFound, ()),
+        Err(DatabaseError::Other) => Custom(Status::InternalServerError, ())
     }
 }
 
-fn generate_upload_name(owner: &String, file: &TempFile<'_>) -> (String, String) {
+fn generate_upload_name(owner: &String, file: &TempFile<'_>) -> String {
     let name = file.name().unwrap().to_owned();
     let ext = get_ext(&name);
     let name = crypto::hash(owner.as_bytes());
-    (format!("{}.{}", name, ext), ext)
+    format!("{}.{}", name, ext)
 }
 
 async fn save_upload(mut file: TempFile<'_>, name: String) -> std::io::Result<()> {

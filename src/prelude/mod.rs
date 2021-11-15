@@ -27,12 +27,15 @@ pub fn get_ext(name: &String) -> String {
         .to_lowercase()
 }
 
-pub fn is_image_ext(ext: &str) -> bool {
-
+pub fn is_image(name: &String) -> bool {
+    let ext = get_ext(name);
+    let ext = ext.as_str();
     matches_extension(ext, ["jpg", "jpeg", "png", "gif"])
 }
 
-pub fn is_doc_ext(ext: &str) -> bool {
+pub fn is_doc(name: &String) -> bool {
+    let ext = get_ext(name);
+    let ext = ext.as_str();
     matches_extension(ext, ["doc", "docx", "pdf"])
 }
 
