@@ -27,12 +27,10 @@ pub async fn logout() -> Redirect {
     Redirect::to(uri!("/login"))
 }
 
+#[require_authorization]
 #[get("/profile")]
 pub async fn profile(validator: Validator) -> Result<Page, Redirect> {
-    match validator.validated {
-        true => Ok(html_from_file(PATH, "templates/profile.html")),
-        false => Err(Redirect::to(uri!("/login")))
-    }
+    Ok(html_from_file(PATH, "templates/profile.html"))
 }
 
 #[require_authorization]
