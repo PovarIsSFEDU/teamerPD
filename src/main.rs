@@ -9,6 +9,8 @@ mod crypto;
 extern crate rocket;
 #[macro_use]
 extern crate teamer_proc_macro;
+#[macro_use]
+extern crate rocket_dyn_templates;
 
 use rocket::{Rocket, Build};
 use crate::routes::{pages, api};
@@ -17,6 +19,7 @@ use mongodb::options::ClientOptions;
 use mongodb::Client;
 use toml::Value;
 use std::fs;
+use rocket_dyn_templates::Template;
 
 #[cfg(debug_assertions)]
 pub const DOMAIN: &str = "http://127.0.0.1:8000";
@@ -46,8 +49,7 @@ async fn launch() -> Rocket<Build> {
             pages::my_team,
             pages::admin_team,
             pages::profile,
-            pages::logout
-            pages::admin_team,
+            pages::logout,
             pages::recover_password,
             api::verify,
             api::recover_password
@@ -59,4 +61,5 @@ async fn launch() -> Rocket<Build> {
             api::send_password_recovery
         ])
         .mount("/", routes![pages::files])
+        .attach(Template::fairing())
 }
