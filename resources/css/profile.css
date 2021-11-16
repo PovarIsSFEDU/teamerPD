@@ -31,6 +31,7 @@
     border-radius: 4px;
     font-size: 16px;
     font-weight: 600;
+    height: auto;
     text-transform: uppercase;
     -webkit-transition: all 200ms linear;
     transition: all 200ms linear;

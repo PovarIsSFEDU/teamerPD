@@ -9,6 +9,8 @@ mod crypto;
 extern crate rocket;
 #[macro_use]
 extern crate teamer_proc_macro;
+#[macro_use]
+extern crate rocket_dyn_templates;
 
 use rocket::{Rocket, Build};
 use crate::routes::{pages, api};
@@ -16,6 +18,9 @@ use crate::database::MongoDriver;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use crate::prelude::*;
+use toml::Value;
+use std::fs;
+use rocket_dyn_templates::Template;
 
 #[cfg(debug_assertions)]
 pub const DOMAIN: &str = "http://127.0.0.1:8000";
@@ -54,6 +59,9 @@ async fn launch() -> Rocket<Build> {
             api::verify,
             api::recover_password,
             pages::profile,
-            pages::logout
+            pages::logout,
+            pages::recover_password,
+            api::verify
         ])
+        .attach(Template::fairing())
 }
