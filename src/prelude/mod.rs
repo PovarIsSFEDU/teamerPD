@@ -16,3 +16,21 @@ pub fn html_from_file(path: &str, name: &str) -> Page {
 
     Html(result.ok())
 }
+
+pub trait MapBoth<T, E> {
+    fn map_both<F, U, F1, E1>(self, ok: F, err: F1) -> Result<U, E1>
+        where F: FnOnce(T) -> U,
+              F1: FnOnce(E) -> E1;
+}
+
+impl<T, E> MapBoth<T, E> for Result<T, E> {
+    fn map_both<F, U, F1, E1>(self, ok: F, err: F1) -> Result<U, E1>
+        where F: FnOnce(T) -> U,
+              F1: FnOnce(E) -> E1
+    {
+        match self {
+            Ok(res) => Ok(ok(res)),
+            Err(res) => Err(err(res))
+        }
+    }
+}

@@ -2,9 +2,13 @@ mod prelude;
 mod routes;
 mod auth;
 mod database;
+mod mail;
+mod crypto;
 
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate teamer_proc_macro;
 
 use rocket::{Rocket, Build};
 use crate::routes::{pages, api};
@@ -13,6 +17,13 @@ use mongodb::options::ClientOptions;
 use mongodb::Client;
 use toml::Value;
 use std::fs;
+
+#[cfg(debug_assertions)]
+pub const DOMAIN: &str = "http://127.0.0.1:8000";
+
+//Change when actual domain is known
+#[cfg(not(debug_assertions))]
+pub const DOMAIN: &str = "http://teamer.firon.org";
 
 #[launch]
 async fn launch() -> Rocket<Build> {
@@ -36,10 +47,16 @@ async fn launch() -> Rocket<Build> {
             pages::admin_team,
             pages::profile,
             pages::logout
+            pages::admin_team,
+            pages::recover_password,
+            api::verify,
+            api::recover_password
         ])
         .mount("/api", routes![
             api::authenticate,
-            api::register
+            api::register,
+            api::send_verification_link,
+            api::send_password_recovery
         ])
         .mount("/", routes![pages::files])
 }
