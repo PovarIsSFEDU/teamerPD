@@ -19,7 +19,6 @@ mongodb = "*"
 jsonwebtoken = "*"
 toml = "0.5.8"
 lettre = "0.10.0-rc.4"
-lettre_email = "*"
 syn = { version =  "1.0.81", features = ["full"] }
 quote = "*"
 crypto-hash = "*"
