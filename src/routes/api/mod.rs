@@ -90,7 +90,7 @@ pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Re
                 .concat(user)
                 .into_string();
             //Uncomment when SMTP is working
-            //mail::send_email_verification(key.0, link);
+            mail::send_email_verification(key.0, link);
             Ok(Custom(Status::Ok, ()))
         }
 
@@ -136,7 +136,7 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 
             match result {
                 Ok(_) => {
-                    //mail::send_recovery(user.email().clone(), link);
+                    mail::send_recovery(user.email().clone(), link);
                     Ok(Status::Ok)
                 }
 

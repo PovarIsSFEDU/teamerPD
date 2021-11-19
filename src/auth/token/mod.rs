@@ -1,13 +1,11 @@
-use std::fs;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Serialize, Deserialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 use rocket::http::Status;
 use rocket::Request;
 use rocket::request::{FromRequest, Outcome};
-use toml::Value;
 use crate::database::User;
-use crate::prelude::MapBoth;
+use crate::prelude::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct Token {
@@ -68,7 +66,7 @@ pub fn issue(user: User) -> String {
         &EncodingKey::from_secret(get_secret().as_bytes())
     ).unwrap();
 
-    format!("{{ \"token\":\"{}\"", token)
+    format!("{{ \"token\":\"{}\"}}", token)
 }
 
 pub fn validate(token: &str) -> Result<Claims, ()> {
@@ -82,10 +80,7 @@ pub fn validate(token: &str) -> Result<Claims, ()> {
 }
 
 fn get_secret() -> String {
-    let toml = fs::read_to_string("Config.toml").expect("Could not open toml");
-    let value = toml.as_str().parse::<Value>().unwrap();
-
-    value["jwt_secret"].as_str().unwrap().to_owned()
+    from_config("jwt_secret")
 }
 
 fn current_time() -> u128 {

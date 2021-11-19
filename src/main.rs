@@ -15,8 +15,7 @@ use crate::routes::{pages, api};
 use crate::database::MongoDriver;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
-use toml::Value;
-use std::fs;
+use crate::prelude::*;
 
 #[cfg(debug_assertions)]
 pub const DOMAIN: &str = "http://127.0.0.1:8000";
@@ -27,9 +26,7 @@ pub const DOMAIN: &str = "http://teamer.firon.org";
 
 #[launch]
 async fn launch() -> Rocket<Build> {
-    let toml = fs::read_to_string("Config.toml").expect("Could not open toml");
-    let value = toml.as_str().parse::<Value>().unwrap();
-    let db_link = value["db_link"].as_str().unwrap();
+    let db_link = from_config("db_link");
 
     let db = ClientOptions::parse(db_link)
         .await
