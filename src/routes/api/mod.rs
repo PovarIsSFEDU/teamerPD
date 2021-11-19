@@ -1,12 +1,13 @@
 use std::path::Path;
 use rocket::fs::TempFile;
 use crate::auth::{token, LoginData, RegistrationData, Validator};
-use crate::database::{DatabaseError, LoginResult, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationResult, GetTeamResult};
+use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationError, GetTeamError};
 use crate::{crypto, mail, DOMAIN};
 use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
+use crate::database::mongo::DatabaseOperationResult;
 use crate::prelude;
 use crate::teams::{TeamType};
 
@@ -20,13 +21,13 @@ pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Cus
             Custom(Status::Ok, token)
         }
 
-        Err(LoginResult::IncorrectPassword) =>
+        Err(LoginError::IncorrectPassword) =>
             Custom(Status::Forbidden, "Incorrect password".to_owned()),
 
-        Err(LoginResult::NotExist) =>
+        Err(LoginError::NotExist) =>
             Custom(Status::NotFound, "User with given login does not exist".to_owned()),
 
-        Err(LoginResult::Other) =>
+        Err(LoginError::Other) =>
             Custom(Status::InternalServerError, "Internal Server Error".to_owned())
     }
 }
@@ -235,43 +236,37 @@ pub async fn upload_team(token: Token, u_type: &str, mut file: TempFile<'_>, db:
 }
 
 #[post("/create_team?<team_name>")]
-pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver>) -> Status
-{
-    let captain = &token.claims.iss.clone();
+pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver>) -> Status {
+    let captain = token.claims.iss;
     println!("{}",captain);
-    let check = db.get_user_team(TeamType::Hackathon, captain).await;
+    let check = db.get_user_team(TeamType::Hackathon, &captain).await;
     match check {
-        Result::Err(err) => {
-            match err {
-                GetTeamResult::NotInTeam => {
-                    let res = db.create_team(TeamType::Hackathon, &team_name, captain).await;
+        Err(GetTeamError::NotInTeam) => {
+            let creation_result = db.create_team(TeamType::Hackathon, team_name, captain).await;
 
-                    match res {
-                        Ok(team) => {
-                            println!("{} created!", team.name);
-                            db.set_user_data(UserDataType::TeamName, captain, &team_name).await;
-                            return Status::Ok
-                        }
-                        Err(err) => {
-                            match err {
-                                TeamCreationResult::Ok => { return Status::Ok }
-                                TeamCreationResult::Exists => { return Status::BadRequest }
-                                TeamCreationResult::Other => {
-                                    println!("Error in creating team");
-                                    return Status::InternalServerError
-                                }
-                            }
-                        }
+            match creation_result {
+                Ok(team) => {
+                    println!("{} created!", team.name);
+                    let result = db.set_user_data(UserDataType::TeamName, &team.captain, &team.name).await;
+
+                    match result {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
                     }
                 }
-                GetTeamResult::Ok => {return Status::BadRequest}
-                GetTeamResult::NotFound => {return Status::BadRequest}
-                GetTeamResult::Other => {return Status::BadRequest}
+
+                Err(TeamCreationError::Other) => {
+                    println!("Error creating team");
+                    Status::InternalServerError
+                }
+                Err(TeamCreationError::Exists) => Status::BadRequest
             }
         }
-        Ok(_) => {return Status::BadRequest}
+
+        Err(GetTeamError::NotFound) => Status::BadRequest,
+        Err(GetTeamError::Other) => Status::InternalServerError,
+        Ok(_) => Status::BadRequest
     }
-    Status::NotImplemented
 }
 
 fn generate_upload_name(owner: &String, file: &TempFile<'_>) -> (String, String) {

@@ -1,6 +1,6 @@
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
-use crate::database::{RegistrationResult, LoginResult, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationResult, GetTeamResult};
+use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
@@ -57,7 +57,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn validate_login(&self, data: LoginData) -> Result<User, LoginResult> {
+    pub async fn validate_login(&self, data: LoginData) -> Result<User, LoginError> {
         let found = self.get::<LoginData>("login", data.login()).await;
 
         match found {
@@ -77,12 +77,12 @@ impl MongoDriver {
                         Ok(user)
                     }
 
-                    false => Err(LoginResult::IncorrectPassword)
+                    false => Err(LoginError::IncorrectPassword)
                 }
             }
 
-            Ok(None) => Err(LoginResult::NotExist),
-            Err(_) => Err(LoginResult::Other)
+            Ok(None) => Err(LoginError::NotExist),
+            Err(_) => Err(LoginError::Other)
         }
     }
 
@@ -176,49 +176,36 @@ impl MongoDriver {
             Err(_) => Err(DatabaseError::Other)
         }
     }
-    pub async fn get_user_team(&self, team_type: TeamType, username:&String) -> Result<String, GetTeamResult> {
+
+    pub async fn get_user_team(&self, _team_type: TeamType, username: &String) -> Result<String, GetTeamError> {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"name": username};
         let result = collection.find_one(filter, None).await;
+
         match result {
-            Ok(result) => {
-                match result {
-                    None => {return Result::Err(GetTeamResult::NotFound)}
-                    Some(user) => {
-                        match user.team {
-                            Option::None => {return  Result::Err(GetTeamResult::NotInTeam)}
-                            Option::Some(team) => {return Result::Ok(team)}
-                        }
-                    }
-                }
+            Ok(Some(user)) => match user.team {
+                Some(team) => Ok(team),
+                None => Err(GetTeamError::NotInTeam)
             }
-            Err(err) => {return Result::Err(GetTeamResult::Other)}
+
+            Ok(None) => Err(GetTeamError::NotFound),
+            Err(_) => Err(GetTeamError::Other)
         }
     }
-    pub async fn create_team(&self, team_type:TeamType, team_name:&String, captain: &String ) -> Result<Team, TeamCreationResult> {
+
+    pub async fn create_team(&self, team_type: TeamType, team_name: String, captain: String) -> Result<Team, TeamCreationError> {
         let db = self.client.database("teams").collection::<Team>("teams");
-        let insert = Team{
-            name: team_name.clone(),
-            logo: None,
-            captain: captain.to_string(),
-            members: vec![captain.to_string()]
-        };
+        let team = Team::new(team_name, captain);
         //TODO: Сделать проверку наличия комманды с таким же названием
         let result = db
-            .insert_one(insert, None)
+            .insert_one(team.clone(), None)
             .await;
+
         match result {
-            Result::Ok(_) => {Result::Ok(Team{
-                name: team_name.clone(),
-                logo: None,
-                captain: captain.to_string(),
-                members: vec![captain.to_string()]
-            })}
-            Result::Err(_) => {Result::Err(TeamCreationResult::Other)}
+            Ok(_) => Ok(team),
+            Err(_) => Err(TeamCreationError::Other)
         }
-
     }
-
 
     pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync

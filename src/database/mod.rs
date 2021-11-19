@@ -6,7 +6,7 @@ mod team;
 pub use mongo::MongoDriver;
 pub use user::User;
 
-pub enum LoginResult {
+pub enum LoginError {
     NotExist,
     IncorrectPassword,
     Other
@@ -39,14 +39,12 @@ pub enum TeamDataType {
     Logo
 }
 
-pub enum TeamCreationResult {
-    Ok,
+pub enum TeamCreationError {
     Exists,
     Other
 }
 
-pub enum GetTeamResult {
-    Ok,
+pub enum GetTeamError {
     NotInTeam,
     NotFound,
     Other
