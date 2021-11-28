@@ -9,10 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (_button_signout != null) {
         _button_signout.addEventListener("click", () => {
             sendRequest("GET", "/logout", null)
+                .then(redir())
                 .catch(err => ThrowError(err))
-            deleteCookie("Authenticate")
-            window.location.replace("/login")
+
+
         })
+    }
+
+    function redir() {
+        deleteCookie("Authenticate")
+        window.location.replace("/login")
     }
 
 
