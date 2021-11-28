@@ -1,19 +1,26 @@
 @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900');
+@import url('colors.css');
+
+:root {
+    --text-primary: rgba(196, 195, 202, 1);
+    --link-primary: rgba(230, 230, 240, 1);
+    --link-primary-hover: rgba(196, 195, 202, 1);
+
+    --text-secondary: rgba(42, 43, 56, 1);
+    --link-secondary: rgba(120, 120, 130, 1);
+    --link-secondary-hover: rgba(60, 60, 70, 1);
+}
 
 body {
     font-family: 'Poppins', sans-serif;
     font-weight: 300;
     font-size: 15px;
     line-height: 1.7;
-    color: #c4c3ca;
+    color: var(--text-primary);
 
     background-color: #1f2029;
     background-image: url('../icons/fon_main.png');
     /*overflow-x: hidden;*/
-}
-
-.link-light {
-    color: #c4c3ca;
 }
 
 .dropdown-toggle {

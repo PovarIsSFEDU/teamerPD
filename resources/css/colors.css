@@ -1,0 +1,22 @@
+a {color: var(--link-primary);}
+a:hover {color: var(--link-primary-hover);}
+a:focus {color: var(--link-primary-hover);}
+
+.nav-link {color: var(--link-primary);}
+.nav-link:hover {color: var(--link-primary-hover);}
+.nav-link:focus {color: var(--link-primary-hover);}
+
+.link-disabled {
+    pointer-events: none;
+    color: rgba(80, 80, 90, 0.7);
+}
+
+.text-primary {color: var(--text-primary);}
+.link-primary {color: var(--link-primary);}
+.link-primary:hover {color: var(--link-primary-hover);}
+.link-primary:focus {color: var(--link-primary-hover);}
+
+.text-secondary {color: var(--text-secondary);}
+.link-secondary {color: var(--link-secondary);}
+.link-secondary:hover {color: var(--link-secondary-hover);}
+.link-secondary:focus {color: var(--link-secondary-hover);}
