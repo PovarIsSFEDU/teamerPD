@@ -88,3 +88,8 @@ pub async fn admin_team() -> Result<Page, Redirect> {
 pub async fn recover_password() -> Page {
     html_from_file(PATH, "templates/recover.html")
 }
+
+#[get("/emailverified")]
+pub async fn email_verified() -> Page {
+    html_from_file(PATH, "templates/emailverified.html")
+}
