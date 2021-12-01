@@ -1,0 +1,65 @@
+.teamcard {
+    background-color: rgba(42, 43, 56, 1);
+    padding: 0;
+    border: none;
+    white-space: normal;
+    text-align: left;
+}
+
+.modal-content {
+    background-color: #2a2b38;
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: 300%;
+}
+
+.modal-header {border: none;}
+.modal-footer {border: none;}
+
+.modal-title {
+    margin-top: 1rem;
+    width: 100%;
+    text-align: center;
+}
+
+#teaminfoClose {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+#teaminfoClose:focus {
+    box-shadow: none;
+}
+
+.modal-body {
+    padding: 0.5rem 3.5rem;
+}
+
+#teaminfoImage {
+    border-radius: 5px;
+}
+
+.desc-blocks {
+    background-color: rgba(31, 32, 41, 1);
+    border-radius: 5px;
+}
+
+#teamTags {
+    margin-top: 0.5rem;
+}
+
+.user {
+    margin-top: 0.2rem;
+}
+
+.user > a {
+    text-decoration: none;
+}
+
+.user > a > img {
+    background-color: rgba(80, 80, 90, 1);
+    margin-right: 5px;
+    border-radius: 50% 50%;
+}
