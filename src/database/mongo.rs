@@ -103,7 +103,10 @@ impl MongoDriver {
 
     pub async fn get_verification_key(&self, login: String) -> Result<(String, String), DatabaseError> {
         #[derive(Deserialize)]
-        struct VKey { #[serde(alias = "verification_key")] value: String, email: String }
+        struct VKey {
+            #[serde(alias = "verification_key")] value: String,
+            email: String,
+        }
 
         let key = self.get::<VKey>("login", &login).await;
         match key {

@@ -35,6 +35,14 @@ async fn launch() -> Rocket<Build> {
     let client = MongoDriver::new(client);
     rocket::build()
         .manage(client)
+        .mount("/api", routes![
+            api::authenticate,
+            api::register,
+            api::send_verification_link,
+            api::send_password_recovery,
+            api::upload
+        ])
+        .mount("/", routes![pages::files])
         .mount("/", routes![
             pages::main_page,
             pages::login,
@@ -44,17 +52,8 @@ async fn launch() -> Rocket<Build> {
             pages::admin_team,
             pages::recover_password,
             api::verify,
-            api::recover_password
-            pages::admin_team,
+            api::recover_password,
             pages::profile,
             pages::logout
         ])
-        .mount("/api", routes![
-            api::authenticate,
-            api::register,
-            api::send_verification_link,
-            api::send_password_recovery,
-            api::upload
-        ])
-        .mount("/", routes![pages::files])
 }
