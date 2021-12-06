@@ -1,37 +1,24 @@
 use crate::auth::RegistrationData;
 use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct User {
-    adm: bool,
-    team: Option<String>,
-    #[serde(flatten)]
-    data: RegistrationData
+    pub name: String,
+    pub team: Option<String>,
+    pub photo: Option<String>,
+    pub resume: Option<String>,
+    pub adm: bool,
 }
+
 
 impl User {
-    pub fn adm(&self) -> bool {
-        self.adm
-    }
-
-    pub fn team(&self) -> Option<String> {
-        self.team.clone()
-    }
-
-    pub fn data(&self) -> &RegistrationData {
-        &self.data
-    }
-}
-
-impl From<RegistrationData> for User {
-    fn from(data: RegistrationData) -> Self {
-        let mut result = User {
-            adm: false,
+    pub fn from(data: &RegistrationData) -> Self {
+        User {
+            name: data.login().clone(),
             team: None,
-            data
-        };
-        result.data.hash();
-
-        result
+            photo: None,
+            resume: None,
+            adm: false,
+        }
     }
 }

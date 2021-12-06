@@ -3,9 +3,10 @@ use crate::prelude::*;
 use rocket::fs::NamedFile;
 use std::path::{PathBuf, Path};
 use rocket::response::Redirect;
-use rocket::State;
+use rocket::{Request, State};
 use crate::auth::Validator;
 use rocket_dyn_templates::{Template};
+use crate::auth::token::Token;
 use crate::database::{MongoDriver, User};
 
 const PATH: &str = "resources/";
@@ -36,11 +37,12 @@ pub async fn logout() -> Redirect {
 }
 
 // #[require_authorization]
-#[get("/profile/<login>")]
-pub async fn profile(login: String, db: &State<MongoDriver>, validator: Validator) -> Template {
+#[get("/profile")]
+pub async fn profile(token: Token, db: &State<MongoDriver>, validator: Validator) -> Template {
     match validator.validated {
         true => {
-            let user = db.get::<User>("login", &login).await;
+            let login = token.claims.iss;
+            let user = db.get_by_name::<User>(&login).await;
             match user {
                 Ok(Some(res)) => {
                     Template::render("profile", res)
@@ -60,16 +62,16 @@ pub async fn profile(login: String, db: &State<MongoDriver>, validator: Validato
     }
 }
 
-#[require_authorization]
+#[require_authorization(redirect_to = "/login", custom, cus)]
 #[get("/team/<id>")]
 pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
 
-#[require_authorization]
+
 #[get("/teams")]
-pub async fn teams() -> Result<Page, Redirect> {
-    Ok(html_from_file(PATH, "templates/teams.html"))
+pub async fn teams() -> Page {
+    html_from_file(PATH, "templates/teams.html")
 }
 
 #[require_authorization]
