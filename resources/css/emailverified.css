@@ -1,0 +1,18 @@
+main > svg {
+    position: absolute;
+    width: 40vh;
+    height: 40vh;
+    top: 25vh;
+    left: calc(50% - 20vh);
+}
+
+main > div {
+    position: absolute;
+    width: 60vh;
+    height: 20%;
+    top: 55%;
+    left: calc(50% - 30vh);
+
+    font-size: 1.5rem;
+    text-align: center;
+}

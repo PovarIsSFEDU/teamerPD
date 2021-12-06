@@ -75,12 +75,9 @@ pub async fn verify(key: String, user: String, db: &State<MongoDriver>) -> Custo
     }
 }
 
-#[require_authorization(custom_handler)]
-#[get("/send_verification?<user>")]
-pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Result<Status, Custom<&str>> {
-    on_auth_failed! {
-        return Err(Custom(Status::Forbidden, "Not authorized"));
-    }
+#[get("/send_verification")]
+pub async fn send_verification_link(db: &State<MongoDriver>, token: Token) -> Result<Status, Custom<&str>> {
+    let user = token.claims.iss;
 
     let key = db.get_verification_key(user.clone()).await;
     match key {

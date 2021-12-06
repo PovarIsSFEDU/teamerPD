@@ -58,6 +58,7 @@ async fn launch() -> Rocket<Build> {
             pages::my_team,
             pages::admin_team,
             pages::recover_password,
+            pages::email_verified,
             api::verify,
             api::recover_password,
             pages::profile,
