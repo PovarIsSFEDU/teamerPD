@@ -15,8 +15,24 @@ pub async fn files(file: PathBuf) -> Option<NamedFile> {
 pub async fn main_page() -> Page { html_from_file(PATH, "templates/main.html") }
 
 #[get("/login")]
-pub async fn login() -> Page {
-    html_from_file(PATH, "templates/login.html")
+pub async fn login(validator: Validator) -> Result<Redirect, Page> {
+    match validator.validated {
+        true => Ok(Redirect::to(uri!("/"))),
+        false => Err(html_from_file(PATH, "templates/login.html"))
+    }
+}
+
+#[get("/logout")]
+pub async fn logout() -> Redirect {
+    Redirect::to(uri!("/login"))
+}
+
+#[get("/profile")]
+pub async fn profile(validator: Validator) -> Result<Page, Redirect> {
+    match validator.validated {
+        true => Ok(html_from_file(PATH, "templates/profile.html")),
+        false => Err(Redirect::to(uri!("/login")))
+    }
 }
 
 #[require_authorization(redirect_to = "/login", custom, cus)]

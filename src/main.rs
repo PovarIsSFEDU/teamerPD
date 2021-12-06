@@ -45,6 +45,9 @@ async fn launch() -> Rocket<Build> {
             pages::recover_password,
             api::verify,
             api::recover_password
+            pages::admin_team,
+            pages::profile,
+            pages::logout
         ])
         .mount("/api", routes![
             api::authenticate,
