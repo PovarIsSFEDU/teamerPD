@@ -1,11 +1,13 @@
 pub mod request;
 pub mod concat;
 
+use std::fs;
 pub use concat::Concatenate;
 use rocket::fs::NamedFile;
 use rocket::response::content::Html;
 use rocket::futures::executor;
 use std::path::Path;
+use toml::Value;
 
 pub type Page = Html<Option<NamedFile>>;
 
@@ -38,6 +40,13 @@ pub fn is_doc(name: &str) -> bool {
     let ext = get_ext(name);
     let ext = ext.as_str();
     matches_extension(ext, ["doc", "docx", "pdf"])
+}
+
+pub fn from_config(param: &str) -> String {
+    let toml = fs::read_to_string("Config.toml").expect("Could not open toml");
+    let value = toml.as_str().parse::<Value>().unwrap();
+
+    value[param].as_str().unwrap().to_owned()
 }
 
 pub trait MapBoth<T, E> {

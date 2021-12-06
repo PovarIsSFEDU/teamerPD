@@ -75,7 +75,7 @@ pub async fn verify(key: String, user: String, db: &State<MongoDriver>) -> Custo
 
 #[require_authorization(custom_handler)]
 #[get("/send_verification?<user>")]
-pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Result<Custom<()>, Custom<&str>> {
+pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Result<Status, Custom<&str>> {
     on_auth_failed! {
         return Err(Custom(Status::Forbidden, "Not authorized"));
     }
@@ -89,9 +89,13 @@ pub async fn send_verification_link(user: String, db: &State<MongoDriver>) -> Re
                 .concat("&user=")
                 .concat(user)
                 .into_string();
-            //Uncomment when SMTP is working
-            //mail::send_email_verification(key.0, link);
-            Ok(Custom(Status::Ok, ()))
+
+            let result = mail::send_email_verification(key.0, link);
+
+            match result {
+                Ok(_) => Ok(Status::Ok),
+                Err(_) => Err(Custom(Status::InternalServerError, "Something went wrong while sending the email"))
+            }
         }
 
         Err(DatabaseError::NotFound) => Err(Custom(Status::NotFound, "User or key not found")),
@@ -136,8 +140,11 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 
             match result {
                 Ok(_) => {
-                    //mail::send_recovery(user.email().clone(), link);
-                    Ok(Status::Ok)
+                    let result = mail::send_recovery(user.email().clone(), link);
+                    match result {
+                        Ok(_) => Ok(Status::Ok),
+                        Err(_) => Err(Custom(Status::InternalServerError, "Something went wrong while sending the email"))
+                    }
                 }
 
                 Err(DatabaseError::NotFound) =>
