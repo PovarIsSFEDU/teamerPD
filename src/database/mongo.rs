@@ -42,6 +42,20 @@ impl MongoDriver {
 
     pub async fn register(&self, data: RegistrationData) -> Result<User, RegistrationResult> {
         let db = self.client.database("user").collection::<NewUser>("login");
+        let found = self.get::<LoginData>("login", data.login()).await;
+        match found {
+            Err(_) => return Err(RegistrationResult::Other),
+            Ok(Some(_)) => return Err(RegistrationResult::Exists),
+            Ok(None) => {}
+        }
+
+        let found = self.get::<LoginData>("email", data.email()).await;
+        match found {
+            Err(_) => return Err(RegistrationResult::Other),
+            Ok(Some(_)) => return Err(RegistrationResult::Exists),
+            Ok(None) => {}
+        }
+
         let insert = NewUser::from(data.clone());
         let _ = db
             .insert_one(insert, None)
