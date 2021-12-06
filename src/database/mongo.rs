@@ -1,6 +1,6 @@
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
-use crate::database::{RegistrationResult, LoginResult, User, VerificationError, DatabaseError, UserDataType, TeamDataType};
+use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::marker::Send;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
-
+use crate::teams::TeamType;
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 pub struct MongoDriver {
@@ -42,6 +42,20 @@ impl MongoDriver {
 
     pub async fn register(&self, data: RegistrationData) -> Result<User, RegistrationResult> {
         let db = self.client.database("user").collection::<NewUser>("login");
+        let found = self.get::<LoginData>("login", data.login()).await;
+        match found {
+            Err(_) => return Err(RegistrationResult::Other),
+            Ok(Some(_)) => return Err(RegistrationResult::Exists),
+            Ok(None) => {}
+        }
+
+        let found = self.get::<LoginData>("email", data.email()).await;
+        match found {
+            Err(_) => return Err(RegistrationResult::Other),
+            Ok(Some(_)) => return Err(RegistrationResult::Exists),
+            Ok(None) => {}
+        }
+
         let insert = NewUser::from(data.clone());
         let _ = db
             .insert_one(insert, None)
@@ -57,7 +71,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn validate_login(&self, data: LoginData) -> Result<User, LoginResult> {
+    pub async fn validate_login(&self, data: LoginData) -> Result<User, LoginError> {
         let found = self.get::<LoginData>("login", data.login()).await;
 
         match found {
@@ -77,12 +91,12 @@ impl MongoDriver {
                         Ok(user)
                     }
 
-                    false => Err(LoginResult::IncorrectPassword)
+                    false => Err(LoginError::IncorrectPassword)
                 }
             }
 
-            Ok(None) => Err(LoginResult::NotExist),
-            Err(_) => Err(LoginResult::Other)
+            Ok(None) => Err(LoginError::NotExist),
+            Err(_) => Err(LoginError::Other)
         }
     }
 
@@ -147,7 +161,8 @@ impl MongoDriver {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
-            UserDataType::Resume => "resume"
+            UserDataType::Resume => "resume",
+            UserDataType::TeamName => "team"
         };
 
         let filter = doc! {"name": user};
@@ -176,6 +191,36 @@ impl MongoDriver {
             Ok(result) if result.modified_count > 0 => Ok(()),
             Ok(_) => Err(DatabaseError::NotFound),
             Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn get_user_team(&self, _team_type: TeamType, username: &String) -> Result<String, GetTeamError> {
+        let collection = self.client.database("user").collection::<User>("users");
+        let filter = doc! {"name": username};
+        let result = collection.find_one(filter, None).await;
+
+        match result {
+            Ok(Some(user)) => match user.team {
+                Some(team) => Ok(team),
+                None => Err(GetTeamError::NotInTeam)
+            }
+
+            Ok(None) => Err(GetTeamError::NotFound),
+            Err(_) => Err(GetTeamError::Other)
+        }
+    }
+
+    pub async fn create_team(&self, team_type: TeamType, team_name: String, captain: String) -> Result<Team, TeamCreationError> {
+        let db = self.client.database("teams").collection::<Team>("teams");
+        let team = Team::new(team_name, captain);
+        //TODO: Сделать проверку наличия комманды с таким же названием
+        let result = db
+            .insert_one(team.clone(), None)
+            .await;
+
+        match result {
+            Ok(_) => Ok(team),
+            Err(_) => Err(TeamCreationError::Other)
         }
     }
 
