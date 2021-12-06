@@ -1,6 +1,7 @@
 pub mod mongo;
 mod user;
-mod dbinsert;
+mod new_user;
+mod team;
 
 pub use mongo::MongoDriver;
 pub use user::User;
@@ -11,7 +12,7 @@ pub enum LoginResult {
     Other
 }
 
-pub enum RegisterResult {
+pub enum RegistrationResult {
     Ok,
     Exists,
     Other
@@ -25,4 +26,14 @@ pub enum VerificationError {
 pub enum DatabaseError {
     NotFound,
     Other
+}
+
+pub enum UserDataType {
+    Photo,
+    Resume
+}
+
+pub enum TeamDataType {
+    Name,
+    Logo
 }

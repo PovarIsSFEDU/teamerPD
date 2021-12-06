@@ -19,7 +19,7 @@ pub async fn login() -> Page {
     html_from_file(PATH, "templates/login.html")
 }
 
-#[require_authorization]
+#[require_authorization(redirect_to = "/login", custom, cus)]
 #[get("/team/<id>")]
 pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))

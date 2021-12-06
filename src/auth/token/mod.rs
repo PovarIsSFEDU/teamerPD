@@ -2,33 +2,59 @@ use std::fs;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Serialize, Deserialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+use rocket::http::Status;
+use rocket::Request;
+use rocket::request::{FromRequest, Outcome};
 use toml::Value;
 use crate::database::User;
+use crate::prelude::MapBoth;
 
 #[derive(Serialize, Deserialize)]
 pub struct Token {
-    token: String
+    token: String,
+    #[serde(skip)]
+    pub claims: Claims
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-struct Claims {
+#[derive(Clone, Serialize, Deserialize, Default)]
+pub struct Claims {
     exp: u128,
-    iss: String,
-    adm: bool,
-    team: Option<String>
+    pub iss: String,
+    pub adm: bool,
+    pub team: Option<String>
 }
 
 impl From<User> for Claims {
     fn from(user: User) -> Self {
         let now = current_time();
         let exp = now + 12 * 60 * 60 * 1000;
-        let (adm, team, iss) = (user.adm(), user.team(), user.data().login().clone());
+        let (adm, team, iss) = (user.adm, user.team, user.name);
 
         Claims {
             exp,
             iss,
             adm,
             team
+        }
+    }
+}
+
+#[async_trait]
+impl<'r> FromRequest<'r> for Token {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let token = request.cookies().get("Authenticate");
+
+        match token {
+            Some(token) => {
+                let token = token.value();
+                match validate(token) {
+                    Ok(claims) => Outcome::Success(Token { token: token.to_owned(), claims }),
+                    Err(_) => Outcome::Failure((Status::Forbidden, ()))
+                }
+            }
+            None => Outcome::Failure((Status::Forbidden, ()))
         }
     }
 }
@@ -42,20 +68,17 @@ pub fn issue(user: User) -> String {
         &EncodingKey::from_secret(get_secret().as_bytes())
     ).unwrap();
 
-    serde_json::to_string(&Token { token }).unwrap()
+    format!("{{ \"token\":\"{}\"", token)
 }
 
-pub fn validate(token: &str) -> bool {
+pub fn validate(token: &str) -> Result<Claims, ()> {
     let validation = jsonwebtoken::decode::<Claims>(
         token,
         &DecodingKey::from_secret(get_secret().as_bytes()),
         &Validation::default()
     );
 
-    match validation {
-        Ok(result) => current_time() < result.claims.exp,
-        Err(_) => false
-    }
+    validation.map_both(|claims| claims.claims, |_| ())
 }
 
 fn get_secret() -> String {
