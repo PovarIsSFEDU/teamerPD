@@ -29,14 +29,14 @@
             <div class="dropdown text-end">
                 <a href="#" class="d-block link-light text-decoration-none dropdown-toggle" id="dropdownUser"
                    data-bs-toggle="dropdown" aria-expanded="false">
-                    {% if user.photo and user.photo != "" %}
-                        <img class="rounded-circle" width="32px" src="{{ user.photo }}" alt="qwe">
+                    {% if photo and photo != "" %}
+                    <img class="rounded-circle" width="32px" src="{{ photo }}" alt="qwe">
                     {% else %}
-                        <img class="rounded-circle" width="32px" src="../icons/logo_white.png" alt="qwe">
+                    <img class="rounded-circle" width="32px" src="../icons/logo_white.png" alt="qwe">
                     {% endif %}
                 </a>
                 <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
-                    <li><a class="dropdown-item" href="/profile/{{ login }}">Profile</a></li>
+                    <li><a class="dropdown-item" href="/profile/{{ name }}">Profile</a></li>
                     <li><a class="dropdown-item" href="/about">About us</a></li>
                     <li>
                         <hr class="dropdown-divider">
@@ -53,13 +53,13 @@
         <div class="col-md-3 border-right">
             <div class="d-flex flex-column align-items-center text-center p-3 py-5">
 
-            {% if user.photo and user.photo != "" %}
-                <img class="rounded-circle mt-5" width="150px" src="{{ user.photo }}" alt="qwe">
-            {% else %}
+                {% if photo and photo != "" %}
+                <img class="rounded-circle mt-5" width="150px" src="{{ photo }}" alt="qwe">
+                {% else %}
                 <img class="rounded-circle mt-5" width="150px" src="../icons/logo_white.png" alt="qwe">
-            {% endif %}
-                <span class="font-weight-bold">{{ login }}</span>
-                <span class="font-weight-bold">{{ email }}</span>
+                {% endif %}
+                <span class="font-weight-bold">{{ name }}</span>
+                <span class="font-weight-bold">email@email.ru</span>
             </div>
         </div>
         <div class="col-md-5 border-right">
@@ -74,7 +74,7 @@
                                class="form-control"
                                id="firname"
                                placeholder="First Name"
-                               {% if name and name != "" %}
+                               {% if name and name !="" %}
                                value="{{ name }}"
                                {% endif %}
                         >
@@ -86,7 +86,7 @@
                                id="surname"
                                value=""
                                placeholder="Surname"
-                               {% if surname and surname != "" %}
+                               {% if surname and surname !="" %}
                                value="{{ surname }}"
                                {% endif %}
                         >

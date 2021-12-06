@@ -12,7 +12,7 @@ use crate::database::team::Team;
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 pub struct MongoDriver {
-    client: Client
+    client: Client,
 }
 
 impl MongoDriver {
@@ -184,6 +184,13 @@ impl MongoDriver {
     {
         let db = self.get_login_collection::<T>();
         db.find_one(doc! {field: value.to_string()}, None).await
+    }
+
+    pub async fn get_by_name<T>(&self, value: &str) -> mongodb::error::Result<Option<T>>
+        where T: DeserializeOwned + Unpin + Send + Sync
+    {
+        let db = self.client.database("user").collection::<T>("users");
+        db.find_one(doc! {"name": value}, None).await
     }
 
     fn get_login_collection<T>(&self) -> Collection<T>

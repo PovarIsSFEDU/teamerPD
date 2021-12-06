@@ -40,9 +40,11 @@ pub async fn logout() -> Redirect {
 pub async fn profile(login: String, db: &State<MongoDriver>, validator: Validator) -> Template {
     match validator.validated {
         true => {
-            let user = db.get::<User>("login", &login).await;
+            let user = db.get_by_name::<User>(&login).await;
+            println!("{:?}", user);
             match user {
                 Ok(Some(res)) => {
+                    println!("{:?}", res);
                     Template::render("profile", res)
                 }
                 _ => {
