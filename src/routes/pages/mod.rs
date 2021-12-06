@@ -3,7 +3,7 @@ use crate::prelude::*;
 use rocket::fs::NamedFile;
 use std::path::{PathBuf, Path};
 use rocket::response::Redirect;
-use rocket::State;
+use rocket::{Request, State};
 use crate::auth::Validator;
 use rocket_dyn_templates::{Template};
 use crate::database::{MongoDriver, User};
@@ -66,10 +66,10 @@ pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
 
-#[require_authorization]
+
 #[get("/teams")]
-pub async fn teams() -> Result<Page, Redirect> {
-    Ok(html_from_file(PATH, "templates/teams.html"))
+pub async fn teams() -> Page {
+    html_from_file(PATH, "templates/teams.html")
 }
 
 #[require_authorization]
