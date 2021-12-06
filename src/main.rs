@@ -62,4 +62,5 @@ async fn launch() -> Rocket<Build> {
             pages::logout
         ])
         .attach(Template::fairing())
+        .mount("/", routes![pages::files])
 }
