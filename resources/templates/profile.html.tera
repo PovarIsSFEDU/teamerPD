@@ -17,8 +17,8 @@
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <li><a href="/" class="nav-link px-2">Main page</a></li>
                 <li><a href="/teams" class="nav-link px-2">Teams</a></li>
-                <li><a href="/team" class="nav-link px-2">My team</a></li>
-                <li><a href="/users" class="nav-link px-2">Users</a></li>
+                <li><a href="/" class="nav-link px-2">My team</a></li>
+                <li><a href="/" class="nav-link px-2">Users</a></li>
                 <li><a href="/about" class="nav-link px-2">About</a></li>
             </ul>
 
@@ -36,7 +36,7 @@
                     {% endif %}
                 </a>
                 <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
-                    <li><a class="dropdown-item" href="/profile/{{ name }}">Profile</a></li>
+                    <li><a class="dropdown-item" href="/profile">Profile</a></li>
                     <li><a class="dropdown-item" href="/about">About us</a></li>
                     <li>
                         <hr class="dropdown-divider">
@@ -59,7 +59,7 @@
                 <img class="rounded-circle mt-5" width="150px" src="../icons/logo_white.png" alt="qwe">
                 {% endif %}
                 <span class="font-weight-bold">{{ name }}</span>
-                <span class="font-weight-bold">email@email.ru</span>
+                <span class="font-weight-bold">{{ email }}</span>
             </div>
         </div>
         <div class="col-md-5 border-right">

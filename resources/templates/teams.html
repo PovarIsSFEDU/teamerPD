@@ -13,7 +13,8 @@
 <div class="modal fade" id="teaminfo" tabindex="-1" aria-labelledby="teaminfoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
         <div class="modal-content">
-            <button type="button" id="teaminfoClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" id="teaminfoClose" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             <div class="modal-header">
                 <h5 class="modal-title" id="teaminfoLabel">???</h5>
             </div>
@@ -22,20 +23,21 @@
                     <div class="row">
                         <div class="col">
                             <svg id="teaminfoImage" width="100%" height="100%"
-                                xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
-                                preserveAspectRatio="xMidYMid slice" focusable="false">
+                                 xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                                 preserveAspectRatio="xMidYMid slice" focusable="false">
                                 <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
-                                <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/> <!-- Fallback to logo -->
+                                <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                                <!-- Fallback to logo -->
                                 <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
                                     <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
                                     <feComponentTransfer>
                                         <feFuncA type="discrete" tableValues="1 1"/>
                                     </feComponentTransfer>
                                 </filter>
-                                <!-- Uncomment later
-                                <image href="https://i.imgur.com/VPX6dVS.png" filter="url(#blurfilter)" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>
-                                <image href="https://i.imgur.com/VPX6dVS.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"/>
-                                -->
+                                <!-- Uncomment later-->
+                                <!--                                <image href="https://i.imgur.com/VPX6dVS.png" filter="url(#blurfilter)" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>-->
+                                <!--                                <image href="https://i.imgur.com/VPX6dVS.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"/>-->
+
                             </svg>
                         </div>
                         <div class="col">
@@ -49,7 +51,8 @@
                                 Long description.
                                 Long description. Long description.
                                 Long description. Long description. Long description. Long description.
-                                Long description. Long description. Long description. Long description. Long description. Long description.
+                                Long description. Long description. Long description. Long description. Long
+                                description. Long description.
                             </div>
                             <div class="p-2 gy-2 row-md-auto desc-blocks" id="teamTags">
                                 Tags: #???, #??????, #?????_?????
@@ -58,9 +61,12 @@
                     </div>
                     <div class="row" style="margin-top: 1rem;">
                         <div class="col">
-                            <div class="row user"><a href="#"><img src="../icons/logo_white.png" width="30rem" height="30rem">User1</a></div>
-                            <div class="row user"><a href="#"><img src="../icons/logo_white.png" width="30rem" height="30rem">User2</a></div>
-                            <div class="row user"><a href="#"><img src="../icons/logo_white.png" width="30rem" height="30rem">User3</a></div>
+                            <div class="row user"><a href="#"><img src="../icons/logo_white.png" width="30rem"
+                                                                   height="30rem">User1</a></div>
+                            <div class="row user"><a href="#"><img src="../icons/logo_white.png" width="30rem"
+                                                                   height="30rem">User2</a></div>
+                            <div class="row user"><a href="#"><img src="../icons/logo_white.png" width="30rem"
+                                                                   height="30rem">User3</a></div>
                         </div>
                         <div class="col">
                             <!-- Найти применение этой фигне -->
@@ -81,8 +87,8 @@
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <li><a href="/" class="nav-link px-2">Main page</a></li>
                 <li><a href="/teams" class="nav-link px-2 link-disabled">Teams</a></li>
-                <li><a href="/team" class="nav-link px-2">My team</a></li>
-                <li><a href="/users" class="nav-link px-2">Users</a></li>
+                <li><a href="/" class="nav-link px-2">My team</a></li>
+                <li><a href="/" class="nav-link px-2">Users</a></li>
                 <li><a href="/about" class="nav-link px-2">About</a></li>
             </ul>
 
@@ -93,7 +99,7 @@
                     <img src="../icons/logo_white.png" alt="mdo" width="32" height="32" class="rounded-circle">
                 </a>
                 <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
-                    <li><a class="dropdown-item" id="profile">Profile</a></li>
+                    <li><a class="dropdown-item" href="/profile">Profile</a></li>
                     <li><a class="dropdown-item" href="/about">About us</a></li>
                     <li>
                         <hr class="dropdown-divider">
@@ -110,12 +116,14 @@
         <div class="container">
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
                 <div class="col">
-                    <button type="button" class="card shadow-sm teamcard" data-bs-toggle="modal" data-bs-target="#teaminfo" data-bs-teamname="Monke Flippers">
+                    <button type="button" class="card shadow-sm teamcard" data-bs-toggle="modal"
+                            data-bs-target="#teaminfo" data-bs-teamname="Monke Flippers">
                         <svg class="card-img-top" width="100%" height="225"
                              xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
                              preserveAspectRatio="xMidYMid slice" focusable="false">
                             <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
-                            <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/> <!-- Fallback to logo -->
+                            <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                            <!-- Fallback to logo -->
                             <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
                                 <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
                                 <feComponentTransfer>
@@ -130,7 +138,8 @@
 
                         <div class="card-body text-secondary">
                             <h5 class="card-title">Monki Flippers</h5>
-                            <p class="card-text">Short description. Short description. Short description. Short description. Short description.</p>
+                            <p class="card-text">Short description. Short description. Short description. Short
+                                description. Short description.</p>
                         </div>
                     </button>
                 </div>
