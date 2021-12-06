@@ -6,6 +6,7 @@ use rocket::response::Redirect;
 use rocket::{Request, State};
 use crate::auth::Validator;
 use rocket_dyn_templates::{Template};
+use crate::auth::token::Token;
 use crate::database::{MongoDriver, User};
 
 const PATH: &str = "resources/";
@@ -36,15 +37,14 @@ pub async fn logout() -> Redirect {
 }
 
 // #[require_authorization]
-#[get("/profile/<login>")]
-pub async fn profile(login: String, db: &State<MongoDriver>, validator: Validator) -> Template {
+#[get("/profile")]
+pub async fn profile(token: Token, db: &State<MongoDriver>, validator: Validator) -> Template {
     match validator.validated {
         true => {
+            let login = token.claims.iss;
             let user = db.get_by_name::<User>(&login).await;
-            println!("{:?}", user);
             match user {
                 Ok(Some(res)) => {
-                    println!("{:?}", res);
                     Template::render("profile", res)
                 }
                 _ => {

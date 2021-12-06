@@ -1,5 +1,4 @@
 import {sendRequest} from "./sendRequest.js";
-import {send_profile} from "./send_profile.js";
 import {ThrowError} from "./throwError.js";
 import {deleteCookie} from "./deleteCookie.js";
 
@@ -14,7 +13,5 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.replace("/login")
         })
     }
-
-    send_profile(document.querySelector("#profile_name").textContent)
 
 });
