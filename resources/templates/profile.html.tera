@@ -59,7 +59,7 @@
                 <img class="rounded-circle mt-5" width="150px" src="../icons/logo_white.png" alt="qwe">
                 {% endif %}
                 <span class="font-weight-bold">{{ name }}</span>
-                <span class="font-weight-bold">email@email.ru</span>
+                <span class="font-weight-bold">{{ email }}</span>
             </div>
         </div>
         <div class="col-md-5 border-right">
