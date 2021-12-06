@@ -11,12 +11,12 @@ impl<'r> FromRequest<'r> for Validator {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let token = request.headers().get_one("Authorization");
-
+        let token = request.cookies().get("Authenticate");
+            // request.headers().get_one("Authorization");
         match token {
             None => Outcome::Success(Validator {validated: false}),
             Some(token) => {
-                let validation = token::validate(token);
+                let validation = token::validate(token.value());
                 match validation {
                     Ok(_) => Outcome::Success(Validator { validated: true }),
                     Err(_) => Outcome::Success(Validator { validated: false })

@@ -18,12 +18,11 @@ bcrypt = "0.10.1"
 mongodb = "*"
 jsonwebtoken = "*"
 toml = "0.5.8"
-lettre = "0.9.6"
-lettre_email = "0.9.4"
+lettre = "0.10.0-rc.4"
 syn = { version =  "1.0.81", features = ["full"] }
 quote = "*"
 crypto-hash = "*"
 
 [dependencies.rocket_dyn_templates]
 version = "0.1.0-rc.1"
-features = ["tera"]
+features = ["handlebars", "tera"]

@@ -12,7 +12,7 @@ use crate::teams::TeamType;
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 pub struct MongoDriver {
-    client: Client
+    client: Client,
 }
 
 impl MongoDriver {
@@ -117,7 +117,10 @@ impl MongoDriver {
 
     pub async fn get_verification_key(&self, login: String) -> Result<(String, String), DatabaseError> {
         #[derive(Deserialize)]
-        struct VKey { #[serde(alias = "verification_key")] value: String, email: String }
+        struct VKey {
+            #[serde(alias = "verification_key")] value: String,
+            email: String,
+        }
 
         let key = self.get::<VKey>("login", &login).await;
         match key {
@@ -154,7 +157,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_user_data(&self, data_type: UserDataType, user: &String, file_name: &String) -> DatabaseOperationResult {
+    pub async fn set_user_data(&self, data_type: UserDataType, user: &str, file_name: &str) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
@@ -173,7 +176,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_team_data(&self, data_type: TeamDataType, name: &String, file_name: &String) -> DatabaseOperationResult {
+    pub async fn set_team_data(&self, data_type: TeamDataType, name: &str, file_name: &str) -> DatabaseOperationResult {
         let collection = self.client.database("teams").collection::<Team>("teams");
         let parameter = match data_type {
             TeamDataType::Name => "name",
@@ -226,6 +229,13 @@ impl MongoDriver {
     {
         let db = self.get_login_collection::<T>();
         db.find_one(doc! {field: value.to_string()}, None).await
+    }
+
+    pub async fn get_by_name<T>(&self, value: &str) -> mongodb::error::Result<Option<T>>
+        where T: DeserializeOwned + Unpin + Send + Sync
+    {
+        let db = self.client.database("user").collection::<T>("users");
+        db.find_one(doc! {"name": value}, None).await
     }
 
     fn get_login_collection<T>(&self) -> Collection<T>
