@@ -201,7 +201,7 @@ pub async fn update_user(token: Token, user: User, db: &State<MongoDriver>) -> S
             Err(_) => Status::InternalServerError
         }
     }
-    
+
     result
 }
 
