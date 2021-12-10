@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/about.css">
     <link rel="stylesheet" href="../css/main.css">
-    <title>News</title>
+    <title>About</title>
 </head>
 <body>
 <header class="p-3 mb-3">
@@ -26,7 +27,7 @@
                    data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="../icons/logo_white.png" alt="mdo" width="32" height="32" class="rounded-circle">
                 </a>
-                <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
+                <ul class="dropdown-menu text-small lst" aria-labelledby="dropdownUser">
                     <li><a class="dropdown-item" href="/profile">Profile</a></li>
                     <li><a class="dropdown-item" href="/about">About us</a></li>
                     <li>
@@ -46,10 +47,73 @@
 
 </header>
 
+<article class="flow">
+    <h1>Проект "Teamer"</h1>
+    <p>Teamer – веб-сервис, позволяющий собирать команды буквально за пару минут. Вы можете выбрать участников
+        самостоятельно или собрать автоматически, по выбранным параметрам и компетенциям. А страница управления командой
+        позволит капитану, всего в несколько кликов, создать и распределить задачи для каждого участника. Теперь вы
+        можете не беспокоиться о сроках, ведь наше приложение упрощает весь процесс – от сбора, до менеджмента и
+        участия, а также предлагает советы и посты о хакатонах.</p>
+    <div class="team">
+        <ul class="auto-grid list-pr">
+            <li></li>
+            <li>
+                <a href="https://vk.com/p0varreal" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Павел Лукаш</h2>
+                    <p>Teamlid, 2 курс</p>
+                    <img class="pr-im" alt="Pavel Lukash" src="../photos/Pavel.jpg">
+                </a>
+            </li>
+            <li></li>
+            <li>
+                <a href="https://vk.com/aethis" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Дмитрий Пузиков</h2>
+                    <p>Backend, 2 курс</p>
+                    <img class="pr-im" alt="Profile shot for Dmi" src="../photos/Dmitry.jpg">
+                </a>
+            </li>
+            <li>
+                <a href="https://vk.com/alexred_tfc" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Александр Михайлов</h2>
+                    <p>Backend, 2 курс</p>
+                    <img class="pr-im" alt="Profile shot for Alex" src="../photos/Alex.jpg">
+                </a>
+            </li>
+            <li>
+                <a href="https://vk.com/manonox" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Тигран Мамедов</h2>
+                    <p>Fullstack, 2 курс</p>
+                    <img class="pr-im" alt="Profile shot for Tig" src="../photos/Pavel.jpg">
+                </a>
+            </li>
+            <li>
+                <a href="https://vk.com/deyz20030" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Денис Земеров</h2>
+                    <p>Frontend, 1 курс</p>
+                    <img class="pr-im" alt="Profile shot for Den" src="../photos/Denis.jpg">
+                </a>
+            </li>
+            <li>
+                <a href="https://vk.com/i.tereschenko98" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Илья Терещенко</h2>
+                    <p>Frontend, 1 курс</p>
+                    <img class="pr-im" alt="Profile shot for Ter" src="../photos/Ilya.jpg">
+                </a>
+            </li>
+            <li>
+                <a href="https://vk.com/nathanbaber" target="_blank&quot;" class="profile">
+                    <h2 class="profile__name">Анастасия Глухих</h2>
+                    <p>Designer, 1 курс</p>
+                    <img class="pr-im" alt="Profile shot for N" src="../photos/Nastya.jpg">
+                </a>
+            </li>
+        </ul>
+    </div>
+</article>
+</body>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
-<script src="https://kit.fontawesome.com/628c8d2499.js" crossorigin="anonymous"></script>
 <script type="module" src="../js/main.js"></script>
-</body>
 </html>
