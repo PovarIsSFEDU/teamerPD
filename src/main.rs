@@ -47,7 +47,8 @@ async fn launch() -> Rocket<Build> {
             api::send_verification_link,
             api::send_password_recovery,
             api::upload,
-            api::create_team
+            api::create_team,
+            api::update_user
         ])
         .mount("/", routes![pages::files])
         .mount("/", routes![
@@ -62,7 +63,8 @@ async fn launch() -> Rocket<Build> {
             api::verify,
             api::recover_password,
             pages::profile,
-            pages::logout
+            pages::logout,
+            pages::about
         ])
         .attach(Template::fairing())
 }

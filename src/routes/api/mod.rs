@@ -1,5 +1,6 @@
 mod helpers;
 
+use std::future::Future;
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
 use std::path::Path;
@@ -14,6 +15,7 @@ use crate::auth::token::Token;
 use crate::database::mongo::DatabaseOperationResult;
 use crate::prelude;
 use crate::teams::{TeamType};
+use serde::{Serialize, Deserialize};
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -153,6 +155,17 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
             }
         }
     }
+}
+
+#[post("/update_user", data="<user>")]
+pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
+    let mut result = Status::Ok;
+
+    result = match db.update_user(user.clone()).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
+    };
+    return result;
 }
 
 #[post("/upload?<u_type>", data = "<file>")]

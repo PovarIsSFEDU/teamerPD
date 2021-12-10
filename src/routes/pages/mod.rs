@@ -36,25 +36,23 @@ pub async fn logout() -> Redirect {
     Redirect::to(uri!("/login"))
 }
 
-// #[require_authorization]
+#[require_authorization(custom_handler, redirect_to = "/")]
 #[get("/profile")]
-pub async fn profile(token: Token, db: &State<MongoDriver>, validator: Validator) -> Template {
-    match validator.validated {
-        true => {
-            let login = token.claims.iss;
-            let user = db.get_by_name::<User>(&login).await;
-            match user {
-                Ok(Some(res)) => {
-                    Template::render("profile", res)
-                }
-                _ => {
-                    let mut context = HashMap::new();
-                    context.insert("error", true);
-                    Template::render("profile", context)
-                }
-            }
+pub async fn profile(token: Token, db: &State<MongoDriver>) -> Template {
+    on_auth_failed! {
+        let mut context = HashMap::new();
+        context.insert("error", true);
+        return Template::render("profile", context);
+    }
+
+    let login = token.claims.iss;
+    let user = db.get_by_login::<User>(&login).await;
+    println!("{:?}", user);
+    match user {
+        Ok(Some(res)) => {
+            Template::render("profile", res)
         }
-        false => {
+        _ => {
             let mut context = HashMap::new();
             context.insert("error", true);
             Template::render("profile", context)
@@ -70,8 +68,10 @@ pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
 
 
 #[get("/teams")]
-pub async fn teams() -> Page {
-    html_from_file(PATH, "templates/teams.html")
+pub async fn teams(validator: Validator) -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("teams", context)
 }
 
 #[require_authorization]
@@ -84,6 +84,13 @@ pub async fn my_team() -> Result<Page, Redirect> {
 #[get("/admteam")]
 pub async fn admin_team() -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
+}
+
+#[get("/about")]
+pub async fn about(validator: Validator) -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("about", context)
 }
 
 #[get("/recover")]

@@ -30,9 +30,9 @@
                 <a href="#" class="d-block text-decoration-none dropdown-toggle" id="dropdownUser"
                    data-bs-toggle="dropdown" aria-expanded="false">
                     {% if photo and photo != "" %}
-                    <img class="rounded-circle" width="32px" src="{{ photo }}" alt="qwe">
+                        <img class="rounded-circle" width="32px" src="{{ photo }}" alt="qwe">
                     {% else %}
-                    <img class="rounded-circle" width="32px" src="../icons/logo_white.png" alt="qwe">
+                        <img class="rounded-circle" width="32px" src="../icons/logo_white.png" alt="qwe">
                     {% endif %}
                 </a>
                 <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
@@ -54,12 +54,13 @@
             <div class="d-flex flex-column align-items-center text-center p-3 py-5">
 
                 {% if photo and photo != "" %}
-                <img class="rounded-circle mt-5" width="150px" src="{{ photo }}" alt="qwe">
+                    <img class="rounded-circle mt-5 profile-image" width="150px" src="{{ photo }}" alt="qwe">
                 {% else %}
-                <img class="rounded-circle mt-5" width="150px" src="../icons/logo_white.png" alt="qwe">
+                    <img class="rounded-circle mt-5 profile-image" width="150px" src="../icons/logo_white.png"
+                         alt="qwe">
                 {% endif %}
-                <span class="font-weight-bold">{{ name }}</span>
-                <span class="font-weight-bold">{{ email }}</span>
+                <span class="font-weight-bold" id="prof-login">{{ login }}</span>
+                <span class="font-weight-bold" id="prof-email">{{ email }}</span>
             </div>
         </div>
         <div class="col-md-5 border-right">
@@ -74,9 +75,9 @@
                                class="form-control"
                                id="firname"
                                placeholder="First Name"
-                               {% if name and name !="" %}
-                               value="{{ name }}"
-                               {% endif %}
+                                {% if name and name !="" %}
+                                    value="{{ name }}"
+                                {% endif %}
                         >
                     </div>
                     <div class="col-md-6">
@@ -84,11 +85,12 @@
                                aria-label="Surname"
                                class="form-control"
                                id="surname"
-                               value=""
                                placeholder="Surname"
-                               {% if surname and surname !="" %}
-                               value="{{ surname }}"
-                               {% endif %}
+                                {% if surname %}
+                                    value="{{ surname }}"
+                                {% else %}
+                                    value=""
+                                {% endif %}
                         >
                     </div>
                 </div>
@@ -111,7 +113,7 @@
                                placeholder="State"></div>
                 </div>
                 <div class="mt-5 text-center">
-                    <button class="btn btn-primary profile-button" type="button">Save Profile</button>
+                    <button class="btn btn-primary profile-button" id="saveprof" type="button">Save Profile</button>
                 </div>
             </div>
         </div>
@@ -127,12 +129,20 @@
                                 type="text" id="competence"
                                 class="form-control"
                                 placeholder="Competence"
+                                autocomplete="off"
                                 aria-label="Input competence name"
                                 value=""
                                 aria-describedby="competence-add">
                         <button class="btn competence-button" type="button" id="competence-add">Add</button>
                     </div>
+                    <ul class="dropdown-menu" id="competence-auto">
+                    </ul>
                 </div>
+                <br>
+                <div id="competences">{% for competence in competences %}
+                        <h5><span class="badge bg-competence"> {{ competence }} <button
+                                        class="remove-competence"></button></span></h5>
+                    {% endfor %}</div>
             </div>
         </div>
     </div>

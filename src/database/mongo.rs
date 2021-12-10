@@ -1,11 +1,12 @@
 use mongodb::{Client, Collection};
-use mongodb::bson::doc;
+use mongodb::bson::{Bson, doc};
 use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::marker::Send;
+use mongodb::bson::Bson::Document;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
@@ -83,7 +84,7 @@ impl MongoDriver {
                         let user = self.client
                             .database("user")
                             .collection::<User>("users")
-                            .find_one(doc! {"name": data.login()}, None)
+                            .find_one(doc! {"login": data.login()}, None)
                             .await
                             .unwrap()
                             .unwrap();
@@ -157,16 +158,57 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_user_data(&self, data_type: UserDataType, user: &str, file_name: &str) -> DatabaseOperationResult {
+    pub async fn set_user_data(&self, data_type: UserDataType, login: &str, value: &str) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
             UserDataType::Resume => "resume",
-            UserDataType::TeamName => "team"
+            UserDataType::TeamName => "team",
+            UserDataType::Email => "email",
+            UserDataType::AdminStatus => "adm",
+            UserDataType::Competences => "competences"
         };
 
-        let filter = doc! {"name": user};
-        let update = doc! {"$set": {parameter: file_name}};
+        let filter = doc! {"login": login};
+        let update = doc! {"$set": {parameter: value}};
+        let result = collection.update_one(filter, update, None).await;
+
+        match result {
+            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn update_user(&self, user: User) -> DatabaseOperationResult {
+        let collection = self.client.database("user").collection::<User>("users");
+        let filter = doc! {"login": user.login.clone()};
+        let update = doc! {"$set": {
+            "login": user.login,
+            "name": user.name,
+            "surname": user.surname,
+            "team": user.team,
+            "photo": user.photo,
+            "resume": user.resume,
+            "adm": user.adm,
+            "email": user.email,
+            "competences": user.competences
+        }};
+
+        let result = collection.update_one(filter, update, None).await;
+
+        match result {
+            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn update_competences(&self, login: &str, value: &Vec<String>) -> DatabaseOperationResult {
+        let collection = self.client.database("user").collection::<User>("users");
+        let filter = doc! {"login": login};
+        let update = doc! {"$set": {"competences": value}};
+
         let result = collection.update_one(filter, update, None).await;
 
         match result {
@@ -196,7 +238,7 @@ impl MongoDriver {
 
     pub async fn get_user_team(&self, _team_type: TeamType, username: &String) -> Result<String, GetTeamError> {
         let collection = self.client.database("user").collection::<User>("users");
-        let filter = doc! {"name": username};
+        let filter = doc! {"login": username};
         let result = collection.find_one(filter, None).await;
 
         match result {
@@ -231,11 +273,18 @@ impl MongoDriver {
         db.find_one(doc! {field: value.to_string()}, None).await
     }
 
-    pub async fn get_by_name<T>(&self, value: &str) -> mongodb::error::Result<Option<T>>
+    pub async fn get_by_login<T>(&self, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
     {
         let db = self.client.database("user").collection::<T>("users");
-        db.find_one(doc! {"name": value}, None).await
+        db.find_one(doc! {"login": value}, None).await
+    }
+
+    pub async fn get_user<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
+        where T: DeserializeOwned + Unpin + Send + Sync
+    {
+        let db = self.client.database("user").collection::<T>("users");
+        db.find_one(doc! {field: value}, None).await
     }
 
     fn get_login_collection<T>(&self) -> Collection<T>

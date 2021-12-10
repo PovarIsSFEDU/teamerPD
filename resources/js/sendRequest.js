@@ -11,9 +11,6 @@ export function sendRequest(method, url, json) {
                 resolve(xhr.response)
             }
         }
-        xhr.onerror = () => {
-            console.log(onerror)
-        }
         xhr.send(JSON.stringify(json))
     })
 }

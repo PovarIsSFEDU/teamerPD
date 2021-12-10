@@ -27,12 +27,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sendRequest("POST", "/api/auth", _login)
             .then(data => RedirectFromLogin("/", data['token']))
-            .catch(err => ThrowError(err))
+            .catch(err => Error())
     })
+
+    function Error() {
+        alert("Произошла ошибка! Вы ввели неправильный пароль!")
+    }
 
     function RedirectFromLogin(url, cookie_value) {
         addCookie('Authenticate', cookie_value)
         window.location.replace(url)
     }
+
+    const _forgotButton = document.querySelector(".forgot");
+    _forgotButton.addEventListener("click", () => {
+        alert("Простите, функция восстановления пароля временно недоступна в связи с SendinBlue API")
+    })
 
 });
