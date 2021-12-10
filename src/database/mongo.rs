@@ -157,16 +157,18 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_user_data(&self, data_type: UserDataType, user: &str, file_name: &str) -> DatabaseOperationResult {
+    pub async fn set_user_data(&self, data_type: UserDataType, id: &str, value: &str) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
             UserDataType::Resume => "resume",
-            UserDataType::TeamName => "team"
+            UserDataType::TeamName => "team",
+            UserDataType::Email => "email",
+            UserDataType::AdminStatus => "adm"
         };
 
-        let filter = doc! {"name": user};
-        let update = doc! {"$set": {parameter: file_name}};
+        let filter = doc! {"_id": id};
+        let update = doc! {"$set": {parameter: value}};
         let result = collection.update_one(filter, update, None).await;
 
         match result {
@@ -236,6 +238,13 @@ impl MongoDriver {
     {
         let db = self.client.database("user").collection::<T>("users");
         db.find_one(doc! {"name": value}, None).await
+    }
+
+    pub async fn get_user<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
+        where T: DeserializeOwned + Unpin + Send + Sync
+    {
+        let db = self.client.database("user").collection::<T>("users");
+        db.find_one(doc! {field: value}, None).await
     }
 
     fn get_login_collection<T>(&self) -> Collection<T>
