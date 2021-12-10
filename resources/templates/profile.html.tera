@@ -124,14 +124,17 @@
                 <div class="col-md-12">
                     <div class="input-group">
                         <input
-                                type="text" id="competence"
-                                class="form-control"
-                                placeholder="Competence"
-                                aria-label="Input competence name"
-                                value=""
-                                aria-describedby="competence-add">
+                            type="text" id="competence"
+                            class="form-control"
+                            placeholder="Competence"
+                            aria-label="Input competence name"
+                            value=""
+                            aria-describedby="competence-add">
                         <button class="btn competence-button" type="button" id="competence-add">Add</button>
                     </div>
+                </div>
+                <br>
+                <div id="competences">
                 </div>
             </div>
         </div>
