@@ -89,3 +89,25 @@
     --bs-gutter-y: 0.5rem;
 }
 
+#competences > h5 {
+    display: inline;
+    margin-right: 5px;
+    line-height: 2rem;
+}
+
+.bg-competence {
+    --bs-bg-opacity: 1;
+    background-color: #ffeba7;
+    color: #102770;
+    box-shadow: 0 8px 24px 0 rgba(255, 235, 167, .2);
+}
+
+.remove-competence {
+    border: none;
+    margin-left: 0.3rem;
+    margin-right: -0.1rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Cross_red_circle.svg/512px-Cross_red_circle.svg.png");
+    background-size: 100% 100%;
+}
