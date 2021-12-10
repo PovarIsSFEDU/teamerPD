@@ -83,7 +83,7 @@ impl MongoDriver {
                         let user = self.client
                             .database("user")
                             .collection::<User>("users")
-                            .find_one(doc! {"name": data.login()}, None)
+                            .find_one(doc! {"login": data.login()}, None)
                             .await
                             .unwrap()
                             .unwrap();
@@ -198,7 +198,7 @@ impl MongoDriver {
 
     pub async fn get_user_team(&self, _team_type: TeamType, username: &String) -> Result<String, GetTeamError> {
         let collection = self.client.database("user").collection::<User>("users");
-        let filter = doc! {"name": username};
+        let filter = doc! {"login": username};
         let result = collection.find_one(filter, None).await;
 
         match result {
@@ -233,11 +233,11 @@ impl MongoDriver {
         db.find_one(doc! {field: value.to_string()}, None).await
     }
 
-    pub async fn get_by_name<T>(&self, value: &str) -> mongodb::error::Result<Option<T>>
+    pub async fn get_by_login<T>(&self, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
     {
         let db = self.client.database("user").collection::<T>("users");
-        db.find_one(doc! {"name": value}, None).await
+        db.find_one(doc! {"login": value}, None).await
     }
 
     pub async fn get_user<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>

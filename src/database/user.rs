@@ -8,6 +8,8 @@ use crate::request;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct User {
     #[serde(default)]
+    pub login: String,
+    #[serde(default)]
     pub name: String,
     pub team: Option<String>,
     pub photo: Option<String>,
@@ -24,7 +26,8 @@ pub struct User {
 impl User {
     pub fn from(data: &RegistrationData) -> Self {
         User {
-            name: data.login().clone(),
+            login: data.login().clone(),
+            name: String::from(""),
             team: None,
             photo: None,
             resume: None,
