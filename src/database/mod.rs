@@ -33,7 +33,8 @@ pub enum UserDataType {
     TeamName,
     Resume,
     Email,
-    AdminStatus
+    AdminStatus,
+    Competences
 }
 
 pub enum TeamDataType {

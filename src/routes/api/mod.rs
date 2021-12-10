@@ -201,6 +201,12 @@ pub async fn update_user(token: Token, user: User, db: &State<MongoDriver>) -> S
             Err(_) => Status::InternalServerError
         }
     }
+    if !user.competences.is_empty() {
+        result = match db.update_competences(&id, &user.competences).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    }
 
     result
 }
