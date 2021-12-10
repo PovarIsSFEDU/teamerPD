@@ -1,11 +1,12 @@
 use mongodb::{Client, Collection};
-use mongodb::bson::doc;
+use mongodb::bson::{Bson, doc};
 use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::marker::Send;
+use mongodb::bson::Bson::Document;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
@@ -157,7 +158,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn set_user_data(&self, data_type: UserDataType, id: &str, value: &str) -> DatabaseOperationResult {
+    pub async fn set_user_data(&self, data_type: UserDataType, login: &str, value: &str) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let parameter = match data_type {
             UserDataType::Photo => "photo",
@@ -168,7 +169,7 @@ impl MongoDriver {
             UserDataType::Competences => "competences"
         };
 
-        let filter = doc! {"_id": id};
+        let filter = doc! {"login": login};
         let update = doc! {"$set": {parameter: value}};
         let result = collection.update_one(filter, update, None).await;
 
@@ -179,9 +180,33 @@ impl MongoDriver {
         }
     }
 
-    pub async fn update_competences(&self, id: &str, value: &Vec<String>) -> DatabaseOperationResult {
+    pub async fn update_user(&self, user: User) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
-        let filter = doc! {"_id": id};
+        let filter = doc! {"login": user.login.clone()};
+        let update = doc! {"$set": {
+            "login": user.login,
+            "name": user.name,
+            "surname": user.surname,
+            "team": user.team,
+            "photo": user.photo,
+            "resume": user.resume,
+            "adm": user.adm,
+            "email": user.email,
+            "competences": user.competences
+        }};
+
+        let result = collection.update_one(filter, update, None).await;
+
+        match result {
+            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn update_competences(&self, login: &str, value: &Vec<String>) -> DatabaseOperationResult {
+        let collection = self.client.database("user").collection::<User>("users");
+        let filter = doc! {"login": login};
         let update = doc! {"$set": {"competences": value}};
 
         let result = collection.update_one(filter, update, None).await;

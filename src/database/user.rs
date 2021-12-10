@@ -1,3 +1,4 @@
+use mongodb::options::UpdateModifications;
 use rocket::data::{FromData, Outcome};
 use rocket::{Data, Request};
 use rocket::http::Status;
@@ -5,12 +6,13 @@ use crate::auth::RegistrationData;
 use serde::{Serialize, Deserialize};
 use crate::request;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct User {
     #[serde(default)]
     pub login: String,
     #[serde(default)]
     pub name: String,
+    pub surname: String,
     pub team: Option<String>,
     pub photo: Option<String>,
     pub resume: Option<String>,
@@ -28,6 +30,7 @@ impl User {
         User {
             login: data.login().clone(),
             name: String::from(""),
+            surname: String::from(""),
             team: None,
             photo: None,
             resume: None,
@@ -46,7 +49,7 @@ impl<'r> FromData<'r> for User {
         let body = request::body_to_string(req, data).await;
         let result = serde_json::from_str::<Self>(body.as_str());
         match result {
-            Ok(user) => Outcome::Success(user),
+            Ok(user) =>  Outcome::Success(user),
             Err(_) => Outcome::Failure((Status::InternalServerError, ()))
         }
     }

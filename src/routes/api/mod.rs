@@ -159,24 +159,15 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 
 #[post("/update_user", data="<user>")]
 pub async fn update_user(token: Token, user: User, db: &State<MongoDriver>) -> Status {
-    #[derive(Serialize, Deserialize, Clone)] struct Id { #[serde(alias="_id")] id: String };
-    #[derive(Serialize, Deserialize, Clone)] struct Email { email: String };
-
-    let e = db.get::<Email>("login", &token.claims.iss).await;
-    let email;
-    match e {
-        Ok(Some(e)) => email = e.email,
-        _ => return Status::InternalServerError
-    }
-
-    let u = db.get_user::<Id>("email", &email).await;
-    let id;
-    match u {
-        Ok(Some(i)) => id = i.id,
-        _ => return Status::InternalServerError
-    }
-
     let mut result = Status::Ok;
+
+    result = match db.update_user(user.clone()).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
+    };
+    return result;
+    let id = user.login;
+
     if !user.email.is_empty() {
         result = match db.set_user_data(UserDataType::Email, &id, &user.email).await {
             Ok(_) => Status::Ok,
