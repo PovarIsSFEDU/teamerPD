@@ -42,7 +42,7 @@ pub async fn profile(token: Token, db: &State<MongoDriver>, validator: Validator
     match validator.validated {
         true => {
             let login = token.claims.iss;
-            let user = db.get_by_name::<User>(&login).await;
+            let user = db.get_by_login::<User>(&login).await;
             match user {
                 Ok(Some(res)) => {
                     Template::render("profile", res)

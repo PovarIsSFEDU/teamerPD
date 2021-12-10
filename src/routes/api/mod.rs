@@ -1,5 +1,6 @@
 mod helpers;
 
+use std::future::Future;
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
 use std::path::Path;
@@ -14,6 +15,7 @@ use crate::auth::token::Token;
 use crate::database::mongo::DatabaseOperationResult;
 use crate::prelude;
 use crate::teams::{TeamType};
+use serde::{Serialize, Deserialize};
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -153,6 +155,60 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
             }
         }
     }
+}
+
+#[post("/update_user", data="<user>")]
+pub async fn update_user(token: Token, user: User, db: &State<MongoDriver>) -> Status {
+    #[derive(Serialize, Deserialize, Clone)] struct Id { #[serde(alias="_id")] id: String };
+    #[derive(Serialize, Deserialize, Clone)] struct Email { email: String };
+
+    let e = db.get::<Email>("login", &token.claims.iss).await;
+    let email;
+    match e {
+        Ok(Some(e)) => email = e.email,
+        _ => return Status::InternalServerError
+    }
+
+    let u = db.get_user::<Id>("email", &email).await;
+    let id;
+    match u {
+        Ok(Some(i)) => id = i.id,
+        _ => return Status::InternalServerError
+    }
+
+    let mut result = Status::Ok;
+    if !user.email.is_empty() {
+        result = match db.set_user_data(UserDataType::Email, &id, &user.email).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    }
+    if let Some(team) = user.team {
+        result = match db.set_user_data(UserDataType::TeamName, &id, &team).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    }
+    if let Some(photo) = user.photo {
+        result = match db.set_user_data(UserDataType::Photo, &id, &photo).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    }
+    if let Some(resume) = user.resume {
+        result = match db.set_user_data(UserDataType::Resume, &id, &resume).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    }
+    if !user.competences.is_empty() {
+        result = match db.update_competences(&id, &user.competences).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    }
+
+    result
 }
 
 #[post("/upload?<u_type>", data = "<file>")]

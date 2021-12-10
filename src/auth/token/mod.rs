@@ -26,7 +26,7 @@ impl From<User> for Claims {
     fn from(user: User) -> Self {
         let now = current_time();
         let exp = now + 12 * 60 * 60 * 1000;
-        let (adm, team, iss) = (user.adm, user.team, user.name);
+        let (adm, team, iss) = (user.adm, user.team, user.login);
 
         Claims {
             exp,
