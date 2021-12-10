@@ -36,25 +36,22 @@ pub async fn logout() -> Redirect {
     Redirect::to(uri!("/login"))
 }
 
-// #[require_authorization]
+#[require_authorization(custom_handler, redirect_to = "/")]
 #[get("/profile")]
-pub async fn profile(token: Token, db: &State<MongoDriver>, validator: Validator) -> Template {
-    match validator.validated {
-        true => {
-            let login = token.claims.iss;
-            let user = db.get_by_login::<User>(&login).await;
-            match user {
-                Ok(Some(res)) => {
-                    Template::render("profile", res)
-                }
-                _ => {
-                    let mut context = HashMap::new();
-                    context.insert("error", true);
-                    Template::render("profile", context)
-                }
-            }
+pub async fn profile(token: Token, db: &State<MongoDriver>) -> Template {
+    on_auth_failed! {
+        let mut context = HashMap::new();
+        context.insert("error", true);
+        return Template::render("profile", context);
+    }
+
+    let login = token.claims.iss;
+    let user = db.get_by_login::<User>(&login).await;
+    match user {
+        Ok(Some(res)) => {
+            Template::render("profile", res)
         }
-        false => {
+        _ => {
             let mut context = HashMap::new();
             context.insert("error", true);
             Template::render("profile", context)

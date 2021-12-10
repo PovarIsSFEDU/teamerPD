@@ -158,7 +158,7 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 }
 
 #[post("/update_user", data="<user>")]
-pub async fn update_user(token: Token, user: User, db: &State<MongoDriver>) -> Status {
+pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
     let mut result = Status::Ok;
 
     result = match db.update_user(user.clone()).await {
@@ -166,40 +166,6 @@ pub async fn update_user(token: Token, user: User, db: &State<MongoDriver>) -> S
         Err(_) => Status::InternalServerError
     };
     return result;
-    let id = user.login;
-
-    if !user.email.is_empty() {
-        result = match db.set_user_data(UserDataType::Email, &id, &user.email).await {
-            Ok(_) => Status::Ok,
-            Err(_) => Status::InternalServerError
-        }
-    }
-    if let Some(team) = user.team {
-        result = match db.set_user_data(UserDataType::TeamName, &id, &team).await {
-            Ok(_) => Status::Ok,
-            Err(_) => Status::InternalServerError
-        }
-    }
-    if let Some(photo) = user.photo {
-        result = match db.set_user_data(UserDataType::Photo, &id, &photo).await {
-            Ok(_) => Status::Ok,
-            Err(_) => Status::InternalServerError
-        }
-    }
-    if let Some(resume) = user.resume {
-        result = match db.set_user_data(UserDataType::Resume, &id, &resume).await {
-            Ok(_) => Status::Ok,
-            Err(_) => Status::InternalServerError
-        }
-    }
-    if !user.competences.is_empty() {
-        result = match db.update_competences(&id, &user.competences).await {
-            Ok(_) => Status::Ok,
-            Err(_) => Status::InternalServerError
-        }
-    }
-
-    result
 }
 
 #[post("/upload?<u_type>", data = "<file>")]
