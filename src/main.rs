@@ -62,7 +62,8 @@ async fn launch() -> Rocket<Build> {
             api::verify,
             api::recover_password,
             pages::profile,
-            pages::logout
+            pages::logout,
+            pages::about
         ])
         .attach(Template::fairing())
 }

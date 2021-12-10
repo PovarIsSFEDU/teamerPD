@@ -35,4 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.replace(url)
     }
 
+    const _forgotButton = document.querySelector(".forgot");
+    _forgotButton.addEventListener("click", () => {
+        alert("Простите, функция восстановления пароля временно недоступна в связи с SendinBlue API")
+    })
+
 });

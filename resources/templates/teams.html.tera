@@ -93,6 +93,7 @@
             </ul>
 
 
+            {% if auth %}
             <div class="dropdown text-end">
                 <a href="#" class="d-block text-decoration-none dropdown-toggle" id="dropdownUser"
                    data-bs-toggle="dropdown" aria-expanded="false">
@@ -107,6 +108,12 @@
                     <li><a class="dropdown-item signout">Sign out</a></li>
                 </ul>
             </div>
+            {% else %}
+            <div class="col-md-3 text-end">
+                <a href="/login" type="button" class="btn me-2 login">Login</a>
+                <a href="/login" type="button" class="btn signup">Sign-up</a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </header>

@@ -70,8 +70,10 @@ pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
 
 
 #[get("/teams")]
-pub async fn teams() -> Page {
-    html_from_file(PATH, "templates/teams.html")
+pub async fn teams(validator: Validator) -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("teams", context)
 }
 
 #[require_authorization]
@@ -84,6 +86,13 @@ pub async fn my_team() -> Result<Page, Redirect> {
 #[get("/admteam")]
 pub async fn admin_team() -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
+}
+
+#[get("/about")]
+pub async fn about(validator: Validator) -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("about", context)
 }
 
 #[get("/recover")]
