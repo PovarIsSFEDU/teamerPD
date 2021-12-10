@@ -47,6 +47,7 @@ pub async fn profile(token: Token, db: &State<MongoDriver>) -> Template {
 
     let login = token.claims.iss;
     let user = db.get_by_login::<User>(&login).await;
+    println!("{:?}", user);
     match user {
         Ok(Some(res)) => {
             Template::render("profile", res)
