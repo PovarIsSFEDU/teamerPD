@@ -111,3 +111,26 @@
     background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Cross_red_circle.svg/512px-Cross_red_circle.svg.png");
     background-size: 100% 100%;
 }
+
+#competence-auto {
+    overflow: scroll;
+    max-height: 15rem;
+    width: 20rem;
+   
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+#competence-auto::-webkit-scrollbar {
+    display: none; /* Chrome, etc. */
+}
+
+#competence-auto > li > button {
+    white-space: normal;
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+}

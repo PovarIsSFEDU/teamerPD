@@ -127,11 +127,15 @@
                             type="text" id="competence"
                             class="form-control"
                             placeholder="Competence"
+                            autocomplete="off"
                             aria-label="Input competence name"
                             value=""
                             aria-describedby="competence-add">
                         <button class="btn competence-button" type="button" id="competence-add">Add</button>
                     </div>
+                    <ul class="dropdown-menu" id="competence-auto">
+                        
+                    </ul>
                 </div>
                 <br>
                 <div id="competences">
