@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function validate() {
-        console.log(competences)
         const _login = document.querySelector("#prof-login")
         if (_login.textContent.toString().replaceAll("/<\\/?.+?>/gi", "") == "") {
             _login.classList.add("invalid")
@@ -37,22 +36,21 @@ document.addEventListener('DOMContentLoaded', () => {
             _email.classList.remove("invalid")
         }
         const _firname = document.querySelector("#firname")
-        if (_firname.value.toString().replaceAll("/<\\/?.+?>/gi", "") == "") {
+        if (_firname.value.toString().trim() == "") {
             _firname.classList.add("invalid")
             return false
         } else {
             _firname.classList.remove("invalid")
         }
         const _surname = document.querySelector("#surname")
-        if (_surname.value.toString().replaceAll("/<\\/?.+?>/gi", "") == "") {
+        if (_surname.value.toString().trim() == "") {
             _surname.classList.add("invalid")
             return false
         } else {
             _surname.classList.remove("invalid")
         }
         let _comp = document.getElementById("competences")
-        console.log(_comp.innerHTML)
-        if (_comp.innerHTML == "") {
+        if (_comp.innerHTML.trim() == "" || competences.length == 0) {
             document.querySelector("#competence").classList.add("invalid")
             return false
         } else {
@@ -63,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     _buttonSave.addEventListener("click", () => {
         if (validate()) {
+            console.log(competences)
             let data = {
                 login: document.querySelector("#prof-login").textContent,
                 name: document.querySelector("#firname").value,
