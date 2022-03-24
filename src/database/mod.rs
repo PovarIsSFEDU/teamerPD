@@ -1,7 +1,7 @@
 pub mod mongo;
+pub mod team;
 mod user;
 mod new_user;
-mod team;
 
 pub use mongo::MongoDriver;
 pub use user::User;

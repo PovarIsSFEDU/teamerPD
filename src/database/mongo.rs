@@ -7,10 +7,23 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::marker::Send;
 use mongodb::bson::Bson::Document;
+use rocket::futures::{future, StreamExt};
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
+
+macro_rules! generate_getter {
+    (name: $name: ident, database: $database: literal, collection: $collection: literal) => {
+        pub async fn $name<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
+            where T: DeserializeOwned + Unpin + Send + Sync
+        {
+            let db = self.client.database($database).collection::<T>($collection);
+            db.find_one(doc! {field: value}, None).await
+        }
+    };
+}
+
 
 pub struct MongoDriver {
     client: Client,
@@ -266,6 +279,21 @@ impl MongoDriver {
         }
     }
 
+    pub async fn get_teams(&self) -> Result<Vec<Team>, DatabaseError> {
+        let db = self.client.database("teams").collection::<Team>("teams");
+        let teams = db.find(doc!{}, None).await;
+        match teams {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(cursor) => Ok(
+                cursor
+                    .take(10)
+                    .map(|x| x.unwrap_or(Team::default()))
+                    .collect::<Vec<_>>()
+                    .await
+            )
+        }
+    }
+
     pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
     {
@@ -285,6 +313,12 @@ impl MongoDriver {
     {
         let db = self.client.database("user").collection::<T>("users");
         db.find_one(doc! {field: value}, None).await
+    }
+
+    generate_getter! {
+        name: get_team,
+        database: "teams",
+        collection: "teams"
     }
 
     fn get_login_collection<T>(&self) -> Collection<T>

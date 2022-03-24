@@ -1,3 +1,4 @@
+pub mod user;
 mod helpers;
 
 use std::future::Future;
@@ -235,6 +236,14 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
         Err(GetTeamError::NotFound) => Status::BadRequest,
         Err(GetTeamError::Other) => Status::InternalServerError,
         Ok(_) => Status::BadRequest
+    }
+}
+
+#[get("/get_teams")]
+pub async fn get_teams(db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.get_teams().await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(teams) => Ok(serde_json::to_string(&teams).unwrap())
     }
 }
 

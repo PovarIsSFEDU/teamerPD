@@ -26,7 +26,6 @@ use rocket_dyn_templates::Template;
 #[cfg(debug_assertions)]
 pub const DOMAIN: &str = "http://127.0.0.1:8000";
 
-//Change when actual domain is known
 #[cfg(not(debug_assertions))]
 pub const DOMAIN: &str = "http://teamer.firon.org";
 
@@ -48,9 +47,12 @@ async fn launch() -> Rocket<Build> {
             api::send_password_recovery,
             api::upload,
             api::create_team,
-            api::update_user
+            api::update_user,
+            api::get_teams
         ])
-        .mount("/", routes![pages::files])
+        .mount("/user", routes![
+            api::user::my_team
+        ])
         .mount("/", routes![
             pages::main_page,
             pages::login,
@@ -64,7 +66,8 @@ async fn launch() -> Rocket<Build> {
             api::recover_password,
             pages::profile,
             pages::logout,
-            pages::about
+            pages::about,
+            pages::files
         ])
         .attach(Template::fairing())
 }
