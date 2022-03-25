@@ -352,7 +352,17 @@ impl MongoDriver {
             Err(_) => Err(TeamCreationError::Other)
         }
     }
-
+    pub async fn check_is_captain(&self, team_name: &String, captain: &String) -> Result<bool, DatabaseError>
+    {
+        let team_coll = self.client.database("teams").collection::<Team>("teams");
+        let team_filter = doc! {"name": team_name, "captain": captain};
+        let team_result = team_coll.count_documents(team_filter.clone(), None).await;
+        match team_result {
+            Ok(res) if res > 0 => Ok(true),
+            Ok(_) => Ok(false),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
     pub async fn get_teams(&self) -> Result<Vec<Team>, DatabaseError> {
         let db = self.client.database("teams").collection::<Team>("teams");
         let teams = db.find(doc!{}, None).await;

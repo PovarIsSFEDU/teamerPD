@@ -242,6 +242,12 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
 #[post("/add_to_team?<user>&<team>")]
 pub async fn add_to_team(token: Token, user: String, team: String, db: &State<MongoDriver>) -> Status
 {
+    match db.check_is_captain(&team, &token.claims.iss).await
+    {
+        Ok(true) => {},
+        Ok(false) => {return Status::Forbidden},
+        Err(..) => return Status::InternalServerError
+    }
     match db.add_user_to_team(&team, &user).await
     {
         AddUserToTeamResult::Ok => Status::Ok,
