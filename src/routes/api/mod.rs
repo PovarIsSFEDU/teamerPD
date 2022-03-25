@@ -17,6 +17,7 @@ use crate::database::mongo::DatabaseOperationResult;
 use crate::prelude;
 use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
+use crate::database::AddUserToTeamResult;
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -236,6 +237,19 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
         Err(GetTeamError::NotFound) => Status::BadRequest,
         Err(GetTeamError::Other) => Status::InternalServerError,
         Ok(_) => Status::BadRequest
+    }
+}
+#[post("/add_to_team?<user>&<team>")]
+pub async fn add_to_team(token: Token, user: String, team: String, db: &State<MongoDriver>) -> Status
+{
+    match db.add_user_to_team(&team, &user).await
+    {
+        AddUserToTeamResult::Ok => Status::Ok,
+        AddUserToTeamResult::UserNotFound => Status::NotFound,
+        AddUserToTeamResult::TeamNotFound => Status::NotFound,
+        AddUserToTeamResult::Exists => Status::BadRequest,
+        AddUserToTeamResult::Error => Status::InternalServerError,
+        AddUserToTeamResult::Other => Status::InternalServerError
     }
 }
 

@@ -48,7 +48,8 @@ async fn launch() -> Rocket<Build> {
             api::upload,
             api::create_team,
             api::update_user,
-            api::get_teams
+            api::get_teams,
+            api::add_to_team,
         ])
         .mount("/user", routes![
             api::user::my_team
@@ -71,3 +72,4 @@ async fn launch() -> Rocket<Build> {
         ])
         .attach(Template::fairing())
 }
+

@@ -52,3 +52,12 @@ pub enum GetTeamError {
     NotFound,
     Other
 }
+
+pub enum AddUserToTeamResult {
+    Ok,
+    UserNotFound,
+    TeamNotFound,
+    Exists,
+    Error,
+    Other
+}
