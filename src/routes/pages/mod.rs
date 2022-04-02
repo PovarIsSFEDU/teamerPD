@@ -3,7 +3,7 @@ use crate::prelude::*;
 use rocket::fs::NamedFile;
 use std::path::{PathBuf, Path};
 use rocket::response::Redirect;
-use rocket::{Request, State};
+use rocket::State;
 use crate::auth::Validator;
 use rocket_dyn_templates::{Template};
 use crate::auth::token::Token;

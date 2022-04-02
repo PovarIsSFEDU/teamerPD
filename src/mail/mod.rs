@@ -8,18 +8,18 @@ const SENDER: &str = "Teamer <p_lukash@list.ru>";
 const SMTP_LOGIN: &str = "p_lukash@list.ru";
 
 pub fn send_email_verification(email: String, link: String) -> Result<(), ()> {
-    send(email, "Verification", link)
+    send(&email, "Verification", link)
 }
 
 pub fn send_email_change(email: String, link: String) -> Result<(), ()> {
-    send(email, "Change email", link)
+    send(&email, "Change email", link)
 }
 
 pub fn send_recovery(email: String, link: String) -> Result<(), ()> {
-    send(email, "Password recovery", link)
+    send(&email, "Password recovery", link)
 }
 
-fn send<S: Into<String>>(email: String, subject: S, link: String) -> Result<(), ()> {
+pub fn send<S: Into<String>>(email: &String, subject: S, link: String) -> Result<(), ()> {
     let email = Message::builder()
         .from(SENDER.parse().unwrap())
         .to(email.parse().unwrap())

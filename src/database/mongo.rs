@@ -1,13 +1,12 @@
 use mongodb::{Client, Collection};
-use mongodb::bson::{Bson, doc};
+use mongodb::bson::doc;
 use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::marker::Send;
-use mongodb::bson::Bson::Document;
-use rocket::futures::{future, StreamExt};
+use rocket::futures::StreamExt;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
@@ -265,7 +264,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn create_team(&self, team_type: TeamType, team_name: String, captain: String) -> Result<Team, TeamCreationError> {
+    pub async fn create_team(&self, _team_type: TeamType, team_name: String, captain: String) -> Result<Team, TeamCreationError> {
         let db = self.client.database("teams").collection::<Team>("teams");
         let team = Team::new(team_name, captain);
         //TODO: Сделать проверку наличия комманды с таким же названием
@@ -276,6 +275,29 @@ impl MongoDriver {
         match result {
             Ok(_) => Ok(team),
             Err(_) => Err(TeamCreationError::Other)
+        }
+    }
+
+    pub async fn add_team_member(&self, team: &str, user: &str) -> DatabaseOperationResult {
+        let members = self.get_team::<Team>("name", team).await;
+        let mut members = match members {
+            Ok(Some(t)) => t,
+            Ok(None) => return Err(DatabaseError::NotFound),
+            Err(_) => return Err(DatabaseError::Other)
+        }.members;
+
+        members.push(user.to_owned());
+        let update_result = self
+            .client
+            .database("teams")
+            .collection::<Team>("teams")
+            .update_one(doc!{"name": team.clone()}, doc!{"$set": {"members": members}}, None)
+            .await;
+
+        match update_result {
+            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(e) => Err(DatabaseError::Other)
         }
     }
 

@@ -16,3 +16,4 @@ pub fn hash_unique(mut data: String) -> String {
     data.push_str(date);
     hash(data.as_bytes())
 }
+

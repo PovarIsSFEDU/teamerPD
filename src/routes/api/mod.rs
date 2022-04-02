@@ -1,11 +1,11 @@
 pub mod user;
 mod helpers;
 
-use std::future::Future;
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
-use std::path::Path;
-use crate::auth::{token, LoginData, RegistrationData, Validator};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use crate::auth::{token, LoginData, RegistrationData};
 use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationError, GetTeamError};
 use crate::{crypto, mail, DOMAIN};
 use rocket::fs::TempFile;
@@ -13,10 +13,15 @@ use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
-use crate::database::mongo::DatabaseOperationResult;
-use crate::prelude;
 use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize)]
+struct InvitationData {
+    exp: u128,
+    pub team: String,
+    pub usr: String
+}
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -160,13 +165,10 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 
 #[post("/update_user", data="<user>")]
 pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
-    let mut result = Status::Ok;
-
-    result = match db.update_user(user.clone()).await {
+    match db.update_user(user.clone()).await {
         Ok(_) => Status::Ok,
         Err(_) => Status::InternalServerError
-    };
-    return result;
+    }
 }
 
 #[post("/upload?<u_type>", data = "<file>")]
@@ -244,6 +246,72 @@ pub async fn get_teams(db: &State<MongoDriver>) -> Result<String, Status> {
     match db.get_teams().await {
         Err(_) => Err(Status::InternalServerError),
         Ok(teams) => Ok(serde_json::to_string(&teams).unwrap())
+    }
+}
+
+#[get("/send_invitation?<team>&<user>")]
+pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String, user: String) -> Status {
+    let sender = token.claims.iss;
+    let sender_team = db.get_user_team(TeamType::Hackathon, &sender).await;
+    let sender_team = match sender_team {
+        Ok(team) => team,
+        Err(GetTeamError::NotInTeam) => return Status::Forbidden,
+        _ => return Status::InternalServerError
+    };
+
+
+    if !sender_team.eq(&team) {
+        return Status::Forbidden;
+    }
+
+    match db.get_user_team(TeamType::Hackathon, &user).await {
+        Err(GetTeamError::NotFound | GetTeamError::Other) => Status::InternalServerError,
+        _ => {
+            let email_header = format!("You are invited to join {}", team);
+            let data = InvitationData {
+                team,
+                usr: user.clone(),
+                exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000
+            };
+            let key = jsonwebtoken::encode(
+                &Header::default(),
+                &data,
+                &EncodingKey::from_secret(from_config("jwt_secret").as_bytes())
+            ).unwrap();
+
+            let link = DOMAIN
+                .concat("/join_team?key=")
+                .concat(key)
+                .into_string();
+
+            let email = match db.get::<RegistrationData>("login", &user).await {
+                Ok(u) => u.unwrap(),
+                Err(_) => return Status::InternalServerError
+            };
+
+            mail::send(email.email(), email_header, link);
+            Status::Ok
+        }
+    }
+}
+
+#[get("/join_team?<key>")]
+pub async fn join_team(db: &State<MongoDriver>, key: String) -> Status {
+    let data = jsonwebtoken::decode::<InvitationData>(
+        &key,
+        &DecodingKey::from_secret(from_config("jwt_secret").as_bytes()),
+        &Validation::default()
+    );
+
+    match data {
+        Ok(data) => {
+            let data = data.claims;
+            match db.add_team_member(&data.team, &data.usr).await {
+                Ok(_) => Status::Ok,
+                Err(_) => Status::InternalServerError
+            }
+        }
+        Err(_) => Status::Forbidden
     }
 }
 

@@ -19,8 +19,6 @@ use crate::database::MongoDriver;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use crate::prelude::*;
-use toml::Value;
-use std::fs;
 use rocket_dyn_templates::Template;
 
 #[cfg(debug_assertions)]
@@ -48,7 +46,8 @@ async fn launch() -> Rocket<Build> {
             api::upload,
             api::create_team,
             api::update_user,
-            api::get_teams
+            api::get_teams,
+            api::send_invitation
         ])
         .mount("/user", routes![
             api::user::my_team
@@ -67,7 +66,8 @@ async fn launch() -> Rocket<Build> {
             pages::profile,
             pages::logout,
             pages::about,
-            pages::files
+            pages::files,
+            api::join_team
         ])
         .attach(Template::fairing())
 }
