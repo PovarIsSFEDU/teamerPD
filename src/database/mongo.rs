@@ -295,7 +295,10 @@ impl MongoDriver {
             .await;
 
         match update_result {
-            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(result) if result.modified_count > 0 => {
+                self.set_user_data(UserDataType::TeamName, user, team);
+                Ok(())
+            }
             Ok(_) => Err(DatabaseError::NotFound),
             Err(e) => Err(DatabaseError::Other)
         }
