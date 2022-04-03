@@ -52,7 +52,8 @@ async fn launch() -> Rocket<Build> {
             api::get_users,
             api::get_users_pagination,
             api::get_teams_pagination,
-            api::add_to_team
+            api::add_to_team,
+            api::send_invitation
         ])
         .mount("/user", routes![
             api::user::my_team,
@@ -74,7 +75,8 @@ async fn launch() -> Rocket<Build> {
             pages::profile,
             pages::logout,
             pages::about,
-            pages::files
+            pages::files,
+            api::join_team
         ])
         .attach(Template::fairing())
 }

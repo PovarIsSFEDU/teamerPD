@@ -1,4 +1,3 @@
-use mongodb::options::UpdateModifications;
 use rocket::data::{FromData, Outcome};
 use rocket::{Data, Request};
 use rocket::http::Status;

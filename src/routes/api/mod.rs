@@ -1,10 +1,11 @@
 pub mod user;
 mod helpers;
 
-use std::future::Future;
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
 use std::path::Path;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use crate::auth::{token, LoginData, RegistrationData, Validator};
 use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, team::Team, TeamCreationError, GetTeamError};
 use crate::{crypto, mail, DOMAIN};
@@ -19,6 +20,13 @@ use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
 use crate::database::AddUserToTeamResult;
 
+
+#[derive(Serialize, Deserialize)]
+struct InvitationData {
+    exp: u128,
+    pub team: String,
+    pub usr: String,
+}
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -299,6 +307,72 @@ pub async fn get_users_pagination(db: &State<MongoDriver>) -> Result<String, Sta
     match db.get_users_pages().await {
         Err(_) => Err(Status::InternalServerError),
         Ok(pages_count) => Ok(serde_json::to_string(&pages_count).unwrap())
+    }
+}
+
+#[get("/send_invitation?<team>&<user>")]
+pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String, user: String) -> Status {
+    let sender = token.claims.iss;
+    let sender_team = db.get_user_team(TeamType::Hackathon, &sender).await;
+    let sender_team = match sender_team {
+        Ok(team) => team,
+        Err(GetTeamError::NotInTeam) => return Status::Forbidden,
+        _ => return Status::InternalServerError
+    };
+
+
+    if !sender_team.eq(&team) {
+        return Status::Forbidden;
+    }
+
+    match db.get_user_team(TeamType::Hackathon, &user).await {
+        Err(GetTeamError::NotFound | GetTeamError::Other) => Status::InternalServerError,
+        _ => {
+            let email_header = format!("You are invited to join {}", team);
+            let data = InvitationData {
+                team,
+                usr: user.clone(),
+                exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000
+            };
+            let key = jsonwebtoken::encode(
+                &Header::default(),
+                &data,
+                &EncodingKey::from_secret(from_config("jwt_secret").as_bytes())
+            ).unwrap();
+
+            let link = DOMAIN
+                .concat("/join_team?key=")
+                .concat(key)
+                .into_string();
+
+            let email = match db.get::<RegistrationData>("login", &user).await {
+                Ok(u) => u.unwrap(),
+                Err(_) => return Status::InternalServerError
+            };
+
+            mail::send(email.email(), email_header, link);
+            Status::Ok
+        }
+    }
+}
+
+#[get("/join_team?<key>")]
+pub async fn join_team(db: &State<MongoDriver>, key: String) -> Status {
+    let data = jsonwebtoken::decode::<InvitationData>(
+        &key,
+        &DecodingKey::from_secret(from_config("jwt_secret").as_bytes()),
+        &Validation::default()
+    );
+
+    match data {
+        Ok(data) => {
+            let data = data.claims;
+            match db.add_team_member(&data.team, &data.usr).await {
+                Ok(_) => Status::Ok,
+                Err(_) => Status::InternalServerError
+            }
+        }
+        Err(_) => Status::Forbidden
     }
 }
 
