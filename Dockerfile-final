@@ -1,0 +1,25 @@
+FROM rust:1.56 as cargo-build
+
+WORKDIR /usr/src/teamer
+COPY . .
+RUN cargo build --release
+
+
+# ------------------------------------------------------------------------------
+# Final Stage
+# ------------------------------------------------------------------------------
+
+FROM debian:buster-slim
+
+RUN apt-get update && apt-get install -y && rm -rf /var/lib/apt/lists/*
+
+COPY --from=cargo-build /usr/src/teamer/target/release/teamer /usr/local/bin/teamer
+COPY Config.toml /usr/local/bin/Config.toml
+COPY Rocket.toml /usr/local/bin/Rocket.toml
+COPY Config.toml Config.toml
+COPY Rocket.toml Rocket.toml
+COPY ./resources /resources
+
+EXPOSE 8000
+
+#CMD ["/usr/local/bin/teamer"]
