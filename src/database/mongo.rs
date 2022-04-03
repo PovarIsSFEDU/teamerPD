@@ -9,7 +9,6 @@ use std::marker::Send;
 use mongodb::bson::Bson::Document;
 use mongodb::options::FindOptions;
 use rocket::futures::{future, StreamExt};
-use rocket::futures::StreamExt;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
@@ -344,6 +343,18 @@ impl MongoDriver {
             Err(_) => return AddUserToTeamResult::Error
         }
         AddUserToTeamResult::Ok
+    }
+
+    pub async fn check_is_captain(&self, team_name: &String, captain: &String) -> Result<bool, DatabaseError>
+    {
+        let team_coll = self.client.database("teams").collection::<Team>("teams");
+        let team_filter = doc! {"name": team_name, "captain": captain};
+        let team_result = team_coll.count_documents(team_filter.clone(), None).await;
+        match team_result {
+            Ok(res) if res > 0 => Ok(true),
+            Ok(_) => Ok(false),
+            Err(_) => Err(DatabaseError::Other)
+        }
     }
 
     pub async fn create_team(&self, team_type: TeamType, mut team: Team, captain: String) -> Result<Team, TeamCreationError> {
