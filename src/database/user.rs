@@ -1,4 +1,3 @@
-use mongodb::options::UpdateModifications;
 use rocket::data::{FromData, Outcome};
 use rocket::{Data, Request};
 use rocket::http::Status;
@@ -6,13 +5,24 @@ use crate::auth::RegistrationData;
 use serde::{Serialize, Deserialize};
 use crate::request;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct User {
     #[serde(default)]
     pub login: String,
     #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub surname: String,
+    #[serde(default)]
+    pub city: String,
+    #[serde(default)]
+    pub bio: String,
+    #[serde(default)]
+    pub tg: String,
+    #[serde(default)]
+    pub git: String,
+    #[serde(default)]
+    pub level: String,
     pub team: Option<String>,
     pub photo: Option<String>,
     pub resume: Option<String>,
@@ -31,6 +41,11 @@ impl User {
             login: data.login().clone(),
             name: String::from(""),
             surname: String::from(""),
+            city: String::from(""),
+            bio: String::from(""),
+            tg: String::from(""),
+            git: String::from(""),
+            level: String::from(""),
             team: None,
             photo: None,
             resume: None,

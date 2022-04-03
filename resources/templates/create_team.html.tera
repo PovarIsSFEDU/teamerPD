@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/profile.css">
+    <title>Create Team</title>
+
+</head>
+<body>
+<header class="p-3 mb-3" style="user-select: none;">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+            <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                <li><a href="/" class="nav-link px-2">Main page</a></li>
+                <li><a href="/teams" class="nav-link px-2">Teams</a></li>
+                {% if auth %}
+                    <li><a href="/create_team" class="nav-link px-2 link-disabled">Create team</a></li>
+                    <li><a href="/users" class="nav-link px-2">Users</a></li>
+                {% endif %}
+                <li><a href="/about" class="nav-link px-2">About</a></li>
+            </ul>
+
+
+            {% if auth %}
+                <div class="dropdown text-end">
+                    <a href="#" class="d-block text-decoration-none dropdown-toggle" id="dropdownUser"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="../icons/logo_white.png" alt="mdo" width="32" height="32" class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
+                        <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                        <li><a class="dropdown-item" href="/about">About us</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item signout">Sign out</a></li>
+                    </ul>
+                </div>
+            {% else %}
+                <div class="col-md-3 text-end">
+                    <a href="/login" type="button" class="btn me-2 login">Login</a>
+                    <a href="/login" type="button" class="btn signup">Sign-up</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<div class="container rounded form-background mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-3 border-right">
+            <div class="d-flex flex-column align-items-center text-center p-3 py-5">
+                <img class="rounded-circle mt-5 profile-image" width="150px" src="../icons/logo_white.png"
+                     alt="qwe">
+                <span class="font-weight-bold" id="team-info"></span>
+            </div>
+        </div>
+        <div class="col-md-5 border-right">
+            <div class="p-3 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="text-right">Create team</h3>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-12">
+                        <input type="text"
+                               aria-label="Team Name"
+                               class="form-control"
+                               id="teamname"
+                               placeholder="Team Name"
+                        >
+                    </div>
+                    {# <div class="col-md-3"> #}
+                    {# <input type="text" #}
+                    {# aria-label="uniq_team_hash" #}
+                    {# class="form-control" #}
+                    {# id="uniq_team_hash" #}
+                    {# placeholder="uniq_team_hash" #}
+                    {# value="" #}
+                    {# > #}
+                    {# </div> #}
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <input type="text" aria-label="Short description"
+                               class="form-control"
+                               id="short_description"
+                               placeholder="short_description"
+                               maxlength="150"
+                               value=""></div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <textarea class="form-control"
+                                  aria-label="Long description"
+                                  id="long_description"
+                                  rows="10"
+                                  placeholder="Put your long description here!"
+                                  style="resize: none;"
+                                  maxlength="500"></textarea>
+                    </div>
+                </div>
+                <div class="mt-5 text-center">
+                    <button class="btn btn-primary profile-button" id="saveTeam" type="button">Save Team</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 py-5">
+                <div class="d-flex justify-content-between align-items-center experience">
+                    <h4>Edit team competence</h4>
+                </div>
+                <br>
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <input
+                                type="text" id="competence"
+                                class="form-control"
+                                placeholder="Competences"
+                                autocomplete="off"
+                                aria-label="Input competence name"
+                                value=""
+                                aria-describedby="competence-add">
+                        <button class="btn competence-button" type="button" id="competence-add">Add</button>
+                    </div>
+                    <ul class="dropdown-menu" id="competence-auto">
+                    </ul>
+                </div>
+                <br>
+                <div id="competences"></div>
+
+            </div>
+            <div class="p-3 py-5">
+                <div class="d-flex justify-content-between align-items-center experience">
+                    <h4>Edit team members</h4>
+                </div>
+                <br>
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <input
+                                type="text" id="member"
+                                class="form-control"
+                                placeholder="Invite members"
+                                autocomplete="off"
+                                aria-label="Input competence name"
+                                value=""
+                                aria-describedby="competence-add">
+                        <button class="btn competence-button" type="button" id="members-add">Add</button>
+                    </div>
+                    <ul class="dropdown-menu" id="members-auto">
+                    </ul>
+                </div>
+                <br>
+                <div id="members"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+<script type="module" src="../js/new_team.js"></script>
+<script type="module" src="../js/main.js"></script>
+</body>
+</html>

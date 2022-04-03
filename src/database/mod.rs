@@ -1,7 +1,7 @@
 pub mod mongo;
+pub mod team;
 mod user;
 mod new_user;
-mod team;
 
 pub use mongo::MongoDriver;
 pub use user::User;
@@ -50,5 +50,14 @@ pub enum TeamCreationError {
 pub enum GetTeamError {
     NotInTeam,
     NotFound,
+    Other
+}
+
+pub enum AddUserToTeamResult {
+    Ok,
+    UserNotFound,
+    TeamNotFound,
+    Exists,
+    Error,
     Other
 }

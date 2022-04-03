@@ -5,9 +5,249 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/teams.css">
     <title>News</title>
 </head>
 <body>
+
+<div class="modal fade" id="teaminfo" tabindex="-1" aria-labelledby="teaminfoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+        <div class="modal-content">
+            <button type="button" class="btn-close infoClose" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="teaminfoLabel">«Tender Hack» в Санкт-Петербурге</h5>
+            </div>
+            <div class="modal-body container">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <svg id="teaminfoImage" width="100%" height="100%"
+                                 xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                                 preserveAspectRatio="xMidYMid slice" focusable="false">
+                                <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                                <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                                <!-- Fallback to logo -->
+                                <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                    <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                    <feComponentTransfer>
+                                        <feFuncA type="discrete" tableValues="1 1"/>
+                                    </feComponentTransfer>
+                                </filter>
+                            </svg>
+                        </div>
+                        <div class="col">
+                            <div class="p-2 gy-2 row-md-auto desc-blocks">
+                                Портал Поставщиков объявляет об открытии регистрации на хакатон «Tender Hack» в г.
+                                Санкт-Петербург. Хакатон посвящен созданию сервиса для автоматизации участия в
+                                котировочных сессиях и только 100 человек смогут принять участие. Стань одним из
+                                них!<br>
+
+                                Задача для команд:<br>
+                                СОЗДАЙТЕ СЕРВИС ДЛЯ АВТОМАТИЗАЦИИ УЧАСТИЯ В КОТИРОВОЧНЫХ СЕССИЯХ.<br>
+
+                                Дополнительные бонусы:<br>
+                                • возможность получить работу или стажировку<br>
+                                • взаимодействие с экспертами и специалистами портала<br>
+                                • брендированный мерч<br>
+                                • питание и кофе-брейки<br>
+
+                                На хакатон приглашают:<br>
+                                - команды от 3 до 5 человек и одиночных участников<br>
+
+                                Подробнее на сайте: https://bit.ly/3CZhswF
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 1rem;">
+                        <div class="col">
+                            <div class="row user">Offline: г. Санкт-Петербург, гостиница Октябрьская, Лиговский
+                                проспект, 10/118
+                            </div>
+                            <div class="row user">Даты: 15-17 апреля 2022г</div>
+                            <div class="row user">Призовой фонд: 400 000 рублей</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="whitesoft" tabindex="-1" aria-labelledby="whitesoftinfoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+        <div class="modal-content">
+            <button type="button" class="btn-close infoClose" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="whitesoftinfoLabel">«Tender Hack» в Санкт-Петербурге</h5>
+            </div>
+            <div class="modal-body container">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <svg id="teaminfoImage" width="100%" height="100%"
+                                 xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                                 preserveAspectRatio="xMidYMid slice" focusable="false">
+                                <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                                <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                                <!-- Fallback to logo -->
+                                <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                    <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                    <feComponentTransfer>
+                                        <feFuncA type="discrete" tableValues="1 1"/>
+                                    </feComponentTransfer>
+                                </filter>
+                            </svg>
+                        </div>
+                        <div class="col">
+                            <div class="p-2 gy-2 row-md-auto desc-blocks">
+                                WhiteSoft (Офлайн, Хабаровск)<br>
+
+                                Хакатон: 22-23 марта 2022 года<br>
+
+                                Технологический фокус хакатона: IT сфера, анализ данных, монетизация проекта<br>
+
+                                Призовой фонд: 100 000 рублей<br>
+
+                                Целевая аудитория: Разработчики, дизайнеры, аналитики, продакт менеджеры.<br>
+
+                                Подробнее: https://bit.ly/37CjhE5
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 1rem;">
+                        <div class="col">
+                            <div class="row user">Офлайн, Хабаровск</div>
+                            <div class="row user">Даты: 22-23 марта 2022 года</div>
+                            <div class="row user">Призовой фонд: 100 000 рублей</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="module" tabindex="-1" aria-labelledby="moduleinfoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+        <div class="modal-content">
+            <button type="button" class="btn-close infoClose" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="moduleinfoLabel">«Tender Hack» в Санкт-Петербурге</h5>
+            </div>
+            <div class="modal-body container">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <svg id="teaminfoImage" width="100%" height="100%"
+                                 xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                                 preserveAspectRatio="xMidYMid slice" focusable="false">
+                                <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                                <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                                <!-- Fallback to logo -->
+                                <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                    <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                    <feComponentTransfer>
+                                        <feFuncA type="discrete" tableValues="1 1"/>
+                                    </feComponentTransfer>
+                                </filter>
+                            </svg>
+                        </div>
+                        <div class="col">
+                            <div class="p-2 gy-2 row-md-auto desc-blocks">
+                                Создать кроссплатформенный модуль на C++ для корректировки внешности и встроить этот
+                                модуль в демонстрационное приложение на iOS или Android, которое бы в режиме реального
+                                времени преобразовывало видео из фронтальной камеры.<br>
+
+                                Подобная функциональность реализована в таких приложениях, как Instagram и Snapchat, и
+                                может подразумевать выравнивание кожи лица, скрытие дефектов кожи, при необходимости,
+                                увеличение глаз, уменьшение носа, подбородка или ушей, то есть приведение пропорций лица
+                                к универсальным стандартам привлекательности. Модуль должен работать корректно
+                                независимо от пола, возраста и цвета кожи. Результат преобразования должен
+                                восприниматься зрителем как естественный, не бросающийся в глаза по сравнению с
+                                оригиналом. Цель – создать едва заметный фильтр, который, позволил бы пользователям
+                                представлять «лучшую версию себя» собеседнику.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 1rem;">
+                        <div class="col">
+                            <div class="row user">Online</div>
+                            <div class="row user">Срок сдачи работ: 13 марта 2022, 23:59 по Дубайскому времени</div>
+                            <div class="row user">Призовой фонд: 40 000$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="teamforce" tabindex="-1" aria-labelledby="teamforceinfoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+        <div class="modal-content">
+            <button type="button" class="btn-close infoClose" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="teamforceinfoLabel">Хакатон «ТИМ ФОРС Альянс»</h5>
+            </div>
+            <div class="modal-body container">
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <svg id="teaminfoImage" width="100%" height="100%"
+                                 xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                                 preserveAspectRatio="xMidYMid slice" focusable="false">
+                                <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                                <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                                <!-- Fallback to logo -->
+                                <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                    <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                    <feComponentTransfer>
+                                        <feFuncA type="discrete" tableValues="1 1"/>
+                                    </feComponentTransfer>
+                                </filter>
+                            </svg>
+                        </div>
+                        <div class="col">
+                            <div class="p-2 gy-2 row-md-auto desc-blocks">
+                                Разбираешься в Python, Data Science, Front-end
+                                и Back-end?<br>
+                                Тогда регистрируйся на хакатон «ТИМ ФОРС Альянс» с призовым фондом 500 000 рублей!
+                                Платформа токенизации проектных ИТ-команд «ТФ Альянс» с 18 по 20 марта 2022 года
+                                проводит онлайн-хакатон, в рамках которого участникам предстоит решить одну из трех
+                                задач на выбор:<br>
+
+                                • Создать платформу доступности IT-компетенций<br>
+                                • Создать систему учета метрик для оценки эффективности работы специалистов и команд в
+                                проектных задачах<br>
+                                • Разработать робота-ассистента на основе Telegram-бота для тематической буферизации
+                                сообщений<br>
+
+                                Участники поборются за проживание в HackerHome в Иннополисе, возможность трудоустройства
+                                в компанию, а также призовой фонд в размере 500 000 рублей!<br>
+
+                                Организатор: «ТИМ ФОРС» — это сервисный брокер и партнёрская сеть.<br>
+
+                                Подробности и регистрация: https://tfalliance.ru
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 1rem;">
+                        <div class="col">
+                            <div class="row user">Offline: г. Санкт-Петербург, гостиница Октябрьская, Лиговский
+                                проспект, 10/118
+                            </div>
+                            <div class="row user">Даты: 15-17 апреля 2022г</div>
+                            <div class="row user">Призовой фонд: 400 000 рублей</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <header class="p-3 mb-3">
 
     <div class="container">
@@ -15,8 +255,10 @@
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <li><a href="/" class="nav-link px-2 link-disabled">Main page</a></li>
                 <li><a href="/teams" class="nav-link px-2">Teams</a></li>
-                <li><a href="/" class="nav-link px-2">My team</a></li>
-                <li><a href="/" class="nav-link px-2">Users</a></li>
+                {% if auth %}
+                <li><a href="/create_team" class="nav-link px-2">Create team</a></li>
+                <li><a href="/users" class="nav-link px-2">Users</a></li>
+                {% endif %}
                 <li><a href="/about" class="nav-link px-2">About</a></li>
             </ul>
 
@@ -45,6 +287,137 @@
     </div>
 
 </header>
+
+<main>
+    <div class="album py-5">
+        <div class="container">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+                <div class="col">
+                    <button type="button" class="card shadow-sm teamcard" data-bs-toggle="modal"
+                            data-bs-target="#teaminfo" data-bs-teamname="Monke Flippers">
+                        <svg class="card-img-top" width="100%" height="225"
+                             xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                             preserveAspectRatio="xMidYMid slice" focusable="false">
+                            <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                            <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                            <!-- Fallback to logo -->
+                            <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                <feComponentTransfer>
+                                    <feFuncA type="discrete" tableValues="1 1"/>
+                                </feComponentTransfer>
+                            </filter>
+                            <!-- Uncomment later
+                            <image href="https://i.imgur.com/VPX6dVS.png" filter="url(#blurfilter)" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>
+                            <image href="https://i.imgur.com/VPX6dVS.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"/>
+                            -->
+                        </svg>
+
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">«Tender Hack» в Санкт-Петербурге</h5>
+                            <p class="card-text">Портал Поставщиков объявляет об открытии регистрации на хакатон «Tender
+                                Hack» в г. Санкт-Петербург. Хакатон посвящен созданию сервиса для автоматизации участия
+                                в котировочных сессиях и только 100 человек смогут принять участие. Стань одним из
+                                них!</p>
+                        </div>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button" class="card shadow-sm teamcard" data-bs-toggle="modal"
+                            data-bs-target="#whitesoft" data-bs-teamname="Monke Flippers">
+                        <svg class="card-img-top" width="100%" height="225"
+                             xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                             preserveAspectRatio="xMidYMid slice" focusable="false">
+                            <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                            <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                            <!-- Fallback to logo -->
+                            <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                <feComponentTransfer>
+                                    <feFuncA type="discrete" tableValues="1 1"/>
+                                </feComponentTransfer>
+                            </filter>
+                            <!-- Uncomment later
+                            <image href="https://i.imgur.com/VPX6dVS.png" filter="url(#blurfilter)" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>
+                            <image href="https://i.imgur.com/VPX6dVS.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"/>
+                            -->
+                        </svg>
+
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">WhiteSoft (Офлайн, Хабаровск)</h5>
+                            <p class="card-text">Хакатон: 22-23 марта 2022 года <br>
+                                Технологический фокус хакатона: IT сфера, анализ данных, монетизация проекта
+                            </p>
+                        </div>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button" class="card shadow-sm teamcard" data-bs-toggle="modal"
+                            data-bs-target="#module" data-bs-teamname="Monke Flippers">
+                        <svg class="card-img-top" width="100%" height="225"
+                             xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                             preserveAspectRatio="xMidYMid slice" focusable="false">
+                            <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                            <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                            <!-- Fallback to logo -->
+                            <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                <feComponentTransfer>
+                                    <feFuncA type="discrete" tableValues="1 1"/>
+                                </feComponentTransfer>
+                            </filter>
+                            <!-- Uncomment later
+                            <image href="https://i.imgur.com/VPX6dVS.png" filter="url(#blurfilter)" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>
+                            <image href="https://i.imgur.com/VPX6dVS.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"/>
+                            -->
+                        </svg>
+
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">Создание модуля для преобразования лиц на видео.</h5>
+                            <p class="card-text">Создать кроссплатформенный модуль на C++ для корректировки внешности и
+                                встроить этот модуль в демонстрационное приложение на iOS или Android, которое бы в
+                                режиме реального времени преобразовывало видео из фронтальной камеры.</p>
+                        </div>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button" class="card shadow-sm teamcard" data-bs-toggle="modal"
+                            data-bs-target="#teamforce" data-bs-teamname="Monke Flippers">
+                        <svg class="card-img-top" width="100%" height="225"
+                             xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monki Flippers"
+                             preserveAspectRatio="xMidYMid slice" focusable="false">
+                            <rect width="100%" height="100%" fill="rgba(80, 80, 90, 1)"/>
+                            <image href="../icons/logo_white.png" x="10%" y="10%" width="80%" height="80%"/>
+                            <!-- Fallback to logo -->
+                            <filter id="blurfilter" width="100%" height="100%" x="-0%" y="-0%">
+                                <fegaussianblur in="SourceGraphic" stdDeviation="10"></fegaussianblur>
+                                <feComponentTransfer>
+                                    <feFuncA type="discrete" tableValues="1 1"/>
+                                </feComponentTransfer>
+                            </filter>
+                            <!-- Uncomment later
+                            <image href="https://i.imgur.com/VPX6dVS.png" filter="url(#blurfilter)" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>
+                            <image href="https://i.imgur.com/VPX6dVS.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"/>
+                            -->
+                        </svg>
+
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">Хакатон «ТИМ ФОРС Альянс»</h5>
+                            <p class="card-text">Платформа токенизации проектных ИТ-команд «ТФ Альянс» с 18 по 20 марта
+                                2022 года проводит онлайн-хакатон, в рамках которого участникам предстоит решить одну из
+                                трех задач на выбор.</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+<footer>
+
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"

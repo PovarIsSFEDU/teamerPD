@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/profile.css">
+    <link rel="stylesheet" href="../css/one_user.css">
     <title>Profile</title>
 
 </head>
@@ -18,16 +19,18 @@
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <li><a href="/" class="nav-link px-2">Main page</a></li>
                 <li><a href="/teams" class="nav-link px-2">Teams</a></li>
-                <li><a href="/create_team" class="nav-link px-2">Create team</a></li>
-                <li><a href="/users" class="nav-link px-2">Users</a></li>
+                {% if auth %}
+                    <li><a href="/create_team" class="nav-link px-2">Create team</a></li>
+                    <li><a href="/users" class="nav-link px-2">Users</a></li>
+                {% endif %}
                 <li><a href="/about" class="nav-link px-2">About</a></li>
             </ul>
 
             <div class="dropdown text-end">
                 <a href="#" class="d-block text-decoration-none dropdown-toggle" id="dropdownUser"
                    data-bs-toggle="dropdown" aria-expanded="false">
-                    {% if photo and photo != "" %}
-                        <img class="rounded-circle" width="32px" src="{{ photo }}" alt="qwe">
+                    {% if user.photo and user.photo != "" %}
+                        <img class="rounded-circle" width="32px" src="{{ user.photo }}" alt="qwe">
                     {% else %}
                         <img class="rounded-circle" width="32px" src="../icons/logo_white.png" alt="qwe">
                     {% endif %}
@@ -50,41 +53,41 @@
         <div class="col-md-3 border-right">
             <div class="d-flex flex-column align-items-center text-center p-3 py-5">
 
-                {% if photo and photo != "" %}
-                    <img class="rounded-circle mt-5 profile-image" width="150px" src="{{ photo }}" alt="qwe">
+                {% if user.photo and user.photo != "" %}
+                    <img class="rounded-circle mt-5 profile-image" width="150px" src="{{ user.photo }}" alt="qwe">
                 {% else %}
                     <img class="rounded-circle mt-5 profile-image" width="150px" src="../icons/logo_white.png"
                          alt="qwe">
                 {% endif %}
-                <span class="font-weight-bold" id="prof-login">{{ login }}</span>
-                <span class="font-weight-bold" id="prof-email">{{ email }}</span>
+                <span class="font-weight-bold" id="prof-email"
+                      style="font-size:18pt; margin-top: 10px; ">{{ user.email }}</span>
             </div>
         </div>
         <div class="col-md-5 border-right">
             <div class="p-3 py-5">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="text-right">Profile</h3>
+                    <h3 class="text-right">{{ user.login }}</h3>
                 </div>
                 <div class="row mt-2">
                     <div class="col-md-6">
-                        <input type="text"
-                               aria-label="First Name"
+                        <label for="firname" class="form-label">Имя</label>
+                        <input type="text" readonly
                                class="form-control"
                                id="firname"
                                placeholder="First Name"
-                                {% if name and name !="" %}
-                                    value="{{ name }}"
+                                {% if user.name and user.name !="" %}
+                                    value="{{ user.name }}"
                                 {% endif %}
                         >
                     </div>
                     <div class="col-md-6">
-                        <input type="text"
-                               aria-label="Surname"
+                        <label for="surname" class="form-label">Фамилия</label>
+                        <input type="text" readonly
                                class="form-control"
                                id="surname"
                                placeholder="Surname"
-                                {% if surname %}
-                                    value="{{ surname }}"
+                                {% if user.surname %}
+                                    value="{{ user.surname }}"
                                 {% else %}
                                     value=""
                                 {% endif %}
@@ -93,140 +96,111 @@
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6">
-                        <input type="text"
+                        <label for="city" class="form-label">Город</label>
+                        <input type="text" readonly
                                class="form-control"
-                               aria-label="City"
                                id="city"
                                placeholder="City"
-                                {% if city %}
-                            value="{{ city }}"
+                                {% if user.city %}
+                            value="{{ user.city }}"
                         {% else %}
                             value=""
                                 {% endif %}>
                     </div>
                     <div class="col-md-6">
                         <div class="sec-center">
+                            <label class="form-label" for="dropdown" id="user_lvl_label">Уровень</label>
                             <input class="dropdown" type="checkbox" id="dropdown" name="dropdown"/>
                             <label class="for-dropdown" for="dropdown" id="user_lvl">
-                                {% if level %}
-                                    {% if level == "Nobody" %}
+                                {% if user.level %}
+                                    {% if user.level == "Nobody" %}
                                         Nobody
-                                        <i class="uil uil-annoyed"></i> <i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-annoyed"></i>
                                     {% endif %}
-                                    {% if level == "Entry" %}
+                                    {% if user.level == "Entry" %}
                                         Entry
-                                        <i class="uil uil-kid"></i> <i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-kid"></i>
                                     {% endif %}
-                                    {% if level == "Intern" %}
+                                    {% if user.level == "Intern" %}
                                         Intern
-                                        <i class="uil uil-meh"></i><i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-meh"></i>
                                     {% endif %}
-                                    {% if level == "Junior" %}
+                                    {% if user.level == "Junior" %}
                                         Junior
-                                        <i class="uil uil-meh-closed-eye"></i><i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-meh-closed-eye"></i>
                                     {% endif %}
-                                    {% if level == "Junior+/Pre-middle" %}
-                                        Junior+/Pre-middle <i class="uil uil-unamused"></i><i
-                                            class="uil uil-arrow-down sp-uil"></i>
+                                    {% if user.level == "Junior+/Pre-middle" %}
+                                        Junior+/Pre-middle <i class="uil uil-unamused"></i>
                                     {% endif %}
-                                    {% if level == "Middle" %}
+                                    {% if user.level == "Middle" %}
                                         Middle
-                                        <i class="uil uil-nerd"></i><i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-nerd"></i>
                                     {% endif %}
-                                    {% if level == "Middle+" %}
+                                    {% if user.level == "Middle+" %}
                                         Middle+
-                                        <i class="uil uil-ninja"></i><i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-ninja"></i>
                                     {% endif %}
-                                    {% if level == "Senior" %}
+                                    {% if user.level == "Senior" %}
                                         Senior
-                                        <i class="uil uil-surprise"></i><i class="uil uil-arrow-down sp-uil"></i>
+                                        <i class="uil uil-surprise"></i>
                                     {% endif %}
                                 {% else %}
-                                    Выберите уровень <i class="uil uil-arrow-down sp-uil"></i>
+                                    Уровень не указан
                                 {% endif %}
                             </label>
-                            <div class="section-dropdown">
-                                <a href="#" class="a-sp" id="nobody">Nobody <i class="uil uil-annoyed"></i></a>
-                                <a href="#" class="a-sp" id="entry">Entry <i class="uil uil-kid"></i></a>
-                                <a href="#" class="a-sp" id="intern">Intern <i class="uil uil-meh"></i></a>
-                                <a href="#" class="a-sp" id="junior">Junior <i class="uil uil-meh-closed-eye"></i></a>
-                                <a href="#" class="a-sp" id="junior+">Junior+/Pre-middle <i
-                                            class="uil uil-unamused"></i></a>
-                                <a href="#" class="a-sp" id="middle">Middle <i class="uil uil-nerd"></i></a>
-                                <a href="#" class="a-sp" id="middle+">Middle+ <i class="uil uil-ninja"></i></a>
-                                <a href="#" class="a-sp" id="senior">Senior <i class="uil uil-surprise"></i></a>
-                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-12">
-                        <textarea class="form-control"
-                                  aria-label="bio"
+                        <label for="bio" class="form-label">Краткая информация</label>
+                        <textarea class="form-control" readonly
                                   id="bio"
                                   rows="10"
                                   placeholder="Put your bio here!"
                                   style="resize: none;"
-                                  maxlength="500">{% if bio %}{{ bio }}{% else %}{% endif %}</textarea>
+                                  maxlength="500">{% if user.bio %}{{ user.bio }}{% else %}{% endif %}</textarea>
                     </div>
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6">
-                        <input type="text"
+                        <label for="tg" class="form-label">Ссылка на Telegram <i class="uil uil-telegram"></i></label>
+                        <input type="text" readonly
                                class="form-control"
-                               aria-label="tg"
                                placeholder="tg"
                                id="tg"
-                                {% if tg %}
-                            value="{{ tg }}"
+                                {% if user.tg %}
+                            value="{{ user.tg }}"
                         {% else %}
                             value=""
                                 {% endif %}>
                     </div>
                     <div class="col-md-6">
-                        <input type="text"
+                        <label for="git" class="form-label">Ссылка на github <i class="uil uil-github"></i></label>
+                        <input type="text" readonly
                                class="form-control"
-                               aria-label="git"
                                placeholder="git"
                                id="git"
-                                {% if git %}
-                                    value="{{ git }}"
+                                {% if user.git %}
+                                    value="{{ user.git }}"
                                 {% else %}
                                     value=""
                                 {% endif %}
                         ></div>
                 </div>
-                <div class="mt-5 text-center">
-                    <button class="btn btn-primary profile-button" id="saveprof" type="button">Save Profile</button>
-                </div>
+
             </div>
         </div>
         <div class="col-md-4">
             <div class="p-3 py-5">
                 <div class="d-flex justify-content-between align-items-center experience">
-                    <h4>Edit competence</h4>
+                    <h4>Competences</h4>
                 </div>
                 <br>
-                <div class="col-md-12">
-                    <div class="input-group">
-                        <input
-                                type="text" id="competence"
-                                class="form-control"
-                                placeholder="Competence"
-                                autocomplete="off"
-                                aria-label="Input competence name"
-                                value=""
-                                aria-describedby="competence-add">
-                        <button class="btn competence-button" type="button" id="competence-add">Add</button>
-                    </div>
-                    <ul class="dropdown-menu" id="competence-auto">
-                    </ul>
+                <div id="competences">{% for competence in user.competences %}
+                        <h5><span class="badge bg-competence"> {{ competence }}</span></h5>
+                    {% endfor %}
                 </div>
-                <br>
-                <div id="competences">{% for competence in competences %}
-                        <h5><span class="badge bg-competence"> {{ competence }} <button
-                                        class="remove-competence"></button></span></h5>
-                    {% endfor %}</div>
             </div>
         </div>
     </div>
@@ -236,7 +210,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
-<script type="module" src="../js/profile.js"></script>
+<script type="module" src="../js/one_user.js"></script>
 <script type="module" src="../js/main.js"></script>
 </body>
 </html>

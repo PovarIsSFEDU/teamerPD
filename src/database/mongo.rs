@@ -7,10 +7,25 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::marker::Send;
 use mongodb::bson::Bson::Document;
+use mongodb::options::FindOptions;
+use rocket::futures::{future, StreamExt};
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
+use crate::database::AddUserToTeamResult;
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
+
+macro_rules! generate_getter {
+    (name: $name: ident, database: $database: literal, collection: $collection: literal) => {
+        pub async fn $name<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
+            where T: DeserializeOwned + Unpin + Send + Sync
+        {
+            let db = self.client.database($database).collection::<T>($collection);
+            db.find_one(doc! {field: value}, None).await
+        }
+    };
+}
+
 
 pub struct MongoDriver {
     client: Client,
@@ -183,10 +198,15 @@ impl MongoDriver {
     pub async fn update_user(&self, user: User) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"login": user.login.clone()};
-        let update = doc! {"$set": {
+        let update = doc! {"$set":{
             "login": user.login,
             "name": user.name,
             "surname": user.surname,
+            "city": user.city,
+            "bio": user.bio,
+            "tg": user.tg,
+            "git": user.git,
+            "level": user.level,
             "team": user.team,
             "photo": user.photo,
             "resume": user.resume,
@@ -194,6 +214,7 @@ impl MongoDriver {
             "email": user.email,
             "competences": user.competences
         }};
+
 
         let result = collection.update_one(filter, update, None).await;
 
@@ -251,11 +272,91 @@ impl MongoDriver {
             Err(_) => Err(GetTeamError::Other)
         }
     }
+    async fn update_user_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
+    {
+        let user_coll = self.client.database("user").collection::<User>("users");
+        let user_filter = doc! {"login": username};
+        let user_update = doc! {"$set": {"team": team_name}};
+        let user_result = user_coll.update_one(user_filter, user_update, None).await;
+        match user_result {
+            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+    async fn add_user_to_vector_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
+    {
+        let team_coll = self.client.database("teams").collection::<Team>("teams");
+        let team_filter = doc! {"name": team_name};
+        let team_result = team_coll.find_one(team_filter.clone(), None).await;
+        match team_result {
+            Ok(Some(team)) => {
+                let mut members = team.members.clone();
+                members.push(username.clone());
+                let team_update = doc! {"$set":{"members": members}};
+                let team_result_2 = team_coll.update_one(team_filter, team_update, None).await;
+                match team_result_2 {
+                    Ok(result) if result.modified_count > 0 => Ok(()),
+                    Ok(_) => Err(DatabaseError::NotFound),
+                    Err(_) => Err(DatabaseError::Other)
+                }
+            },
+            Ok(None) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
 
-    pub async fn create_team(&self, team_type: TeamType, team_name: String, captain: String) -> Result<Team, TeamCreationError> {
+    pub async fn add_user_to_team(&self, team_name: &String, username: &String) -> AddUserToTeamResult {
+        let user_coll = self.client.database("user").collection::<User>("users");
+        let user_filter = doc! {"login": username};
+        let user_result = user_coll.count_documents(user_filter, None).await;
+        let team_coll = self.client.database("teams").collection::<Team>("teams");
+        let team_filter = doc! {"name": team_name};
+        let team_result = team_coll.count_documents(team_filter, None).await;
+        match user_result {
+            Ok(res) if res > 0 => {},
+            Ok(_) =>  {
+                return AddUserToTeamResult::UserNotFound},
+            Err(_) => return AddUserToTeamResult::Error
+        }
+        match team_result {
+            Ok(res) if res > 0 => {},
+            Ok(_) => {
+                return AddUserToTeamResult::TeamNotFound
+            },
+            Err(_) => return AddUserToTeamResult::Error
+        }
+        let upd_res_user = self.update_user_team(team_name, username).await;
+        match upd_res_user
+        {
+            Ok(_) => {},
+            Err(_) => return AddUserToTeamResult::Error
+        }
+        let upd_res_team = self.add_user_to_vector_team(team_name, username).await;
+        match upd_res_team
+        {
+            Ok(_) => {},
+            Err(_) => return AddUserToTeamResult::Error
+        }
+        AddUserToTeamResult::Ok
+    }
+
+    pub async fn check_is_captain(&self, team_name: &String, captain: &String) -> Result<bool, DatabaseError>
+    {
+        let team_coll = self.client.database("teams").collection::<Team>("teams");
+        let team_filter = doc! {"name": team_name, "captain": captain};
+        let team_result = team_coll.count_documents(team_filter.clone(), None).await;
+        match team_result {
+            Ok(res) if res > 0 => Ok(true),
+            Ok(_) => Ok(false),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn create_team(&self, team_type: TeamType, mut team: Team, captain: String) -> Result<Team, TeamCreationError> {
         let db = self.client.database("teams").collection::<Team>("teams");
-        let team = Team::new(team_name, captain);
-        //TODO: Сделать проверку наличия комманды с таким же названием
+        team.captain = captain.clone();
+        team.members.push(captain);
         let result = db
             .insert_one(team.clone(), None)
             .await;
@@ -265,6 +366,88 @@ impl MongoDriver {
             Err(_) => Err(TeamCreationError::Other)
         }
     }
+
+    pub async fn add_team_member(&self, team: &str, user: &str) -> DatabaseOperationResult {
+        let members = self.get_team::<Team>("name", team).await;
+        let mut members = match members {
+            Ok(Some(t)) => t,
+            Ok(None) => return Err(DatabaseError::NotFound),
+            Err(_) => return Err(DatabaseError::Other)
+        }.members;
+
+        members.push(user.to_owned());
+        let update_result = self
+            .client
+            .database("teams")
+            .collection::<Team>("teams")
+            .update_one(doc!{"name": team.clone()}, doc!{"$set": {"members": members}}, None)
+            .await;
+
+        match update_result {
+            Ok(result) if result.modified_count > 0 => {
+                self.set_user_data(UserDataType::TeamName, user, team);
+                Ok(())
+            }
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(e) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn get_teams(&self, offset: usize, limit: usize) -> Result<Vec<Team>, DatabaseError> {
+        let db = self.client.database("teams").collection::<Team>("teams");
+        let teams = db.find(doc! {}, None).await;
+        match teams {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(cursor) => Ok(
+                cursor
+                    .skip((offset - 1) * 6)
+                    .take(limit)
+                    .map(|x| x.unwrap_or(Team::default()))
+                    .collect::<Vec<_>>()
+                    .await
+            )
+        }
+    }
+
+    pub async fn get_teams_pages(&self) -> Result<u64, DatabaseError> {
+        let db = self.client.database("teams").collection::<User>("teams");
+        let teams_count = db.count_documents(doc! {}, None).await;
+        match teams_count {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(res) => {
+                if res < 6 { Ok(1) } else if res % 6 == 0 { Ok(res / 6) } else { Ok(res / 6 + 1) }
+            }
+        }
+    }
+
+    pub async fn get_users(&self, offset: usize, limit: usize) -> Result<Vec<User>, DatabaseError> {
+        let db = self.client.database("user").collection::<User>("users");
+        let users = db.find(doc! {"surname": { "$ne": "" }}, None).await;
+
+        match users {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(cursor) => Ok(
+                cursor
+                    .skip((offset - 1) * 5)
+                    .take(limit)
+                    .map(|x| x.unwrap_or(User::default()))
+                    .collect::<Vec<_>>()
+                    .await
+            )
+        }
+    }
+
+    pub async fn get_users_pages(&self) -> Result<u64, DatabaseError> {
+        let db = self.client.database("user").collection::<User>("users");
+        let pages_count = db.count_documents(doc! {"surname": { "$ne": "" }}, None).await;
+        match pages_count {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(res) => {
+                if res < 5 { Ok(1) } else if res % 5 == 0 { Ok(res / 5) } else { Ok(res / 5 + 1) }
+            }
+        }
+    }
+
 
     pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
@@ -285,6 +468,12 @@ impl MongoDriver {
     {
         let db = self.client.database("user").collection::<T>("users");
         db.find_one(doc! {field: value}, None).await
+    }
+
+    generate_getter! {
+        name: get_team,
+        database: "teams",
+        collection: "teams"
     }
 
     fn get_login_collection<T>(&self) -> Collection<T>

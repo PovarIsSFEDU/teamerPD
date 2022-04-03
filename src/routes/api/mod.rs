@@ -1,11 +1,13 @@
+pub mod user;
 mod helpers;
 
-use std::future::Future;
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
 use std::path::Path;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use crate::auth::{token, LoginData, RegistrationData, Validator};
-use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationError, GetTeamError};
+use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, team::Team, TeamCreationError, GetTeamError};
 use crate::{crypto, mail, DOMAIN};
 use rocket::fs::TempFile;
 use rocket::http::Status;
@@ -16,6 +18,15 @@ use crate::database::mongo::DatabaseOperationResult;
 use crate::prelude;
 use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
+use crate::database::AddUserToTeamResult;
+
+
+#[derive(Serialize, Deserialize)]
+struct InvitationData {
+    exp: u128,
+    pub team: String,
+    pub usr: String,
+}
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -157,7 +168,7 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
     }
 }
 
-#[post("/update_user", data="<user>")]
+#[post("/update_user", data = "<user>")]
 pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
     let mut result = Status::Ok;
 
@@ -204,18 +215,16 @@ pub async fn upload(token: Token, u_type: &str, file: TempFile<'_>, db: &State<M
     db_result.into_custom()
 }
 
-#[post("/create_team?<team_name>")]
-pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver>) -> Status {
+#[post("/create_team", data = "<team>")]
+pub async fn create_team(token: Token, team: Team, db: &State<MongoDriver>) -> Status {
     let captain = token.claims.iss;
-    println!("{}", captain);
     let check = db.get_user_team(TeamType::Hackathon, &captain).await;
     match check {
         Err(GetTeamError::NotInTeam) => {
-            let creation_result = db.create_team(TeamType::Hackathon, team_name, captain).await;
+            let creation_result = db.create_team(TeamType::Hackathon, team, captain).await;
 
             match creation_result {
                 Ok(team) => {
-                    println!("{} created!", team.name);
                     let result = db.set_user_data(UserDataType::TeamName, &team.captain, &team.name).await;
 
                     match result {
@@ -225,7 +234,6 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
                 }
 
                 Err(TeamCreationError::Other) => {
-                    println!("Error creating team");
                     Status::InternalServerError
                 }
                 Err(TeamCreationError::Exists) => Status::BadRequest
@@ -235,6 +243,132 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
         Err(GetTeamError::NotFound) => Status::BadRequest,
         Err(GetTeamError::Other) => Status::InternalServerError,
         Ok(_) => Status::BadRequest
+    }
+}
+#[post("/add_to_team?<user>&<team>")]
+pub async fn add_to_team(token: Token, user: String, team: String, db: &State<MongoDriver>) -> Status
+{
+    match db.check_is_captain(&team, &token.claims.iss).await
+    {
+        Ok(true) => {},
+        Ok(false) => {return Status::Forbidden},
+        Err(..) => return Status::InternalServerError
+    }
+    match db.add_user_to_team(&team, &user).await
+    {
+        AddUserToTeamResult::Ok => Status::Ok,
+        AddUserToTeamResult::UserNotFound => Status::NotFound,
+        AddUserToTeamResult::TeamNotFound => Status::NotFound,
+        AddUserToTeamResult::Exists => Status::BadRequest,
+        AddUserToTeamResult::Error => Status::InternalServerError,
+        AddUserToTeamResult::Other => Status::InternalServerError
+    }
+}
+
+#[get("/get_all_teams?<page>")]
+pub async fn get_teams(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
+    if page < 1 {
+        page = 1
+    }
+    match db.get_teams(page, 6).await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(teams) => Ok(serde_json::to_string(&teams).unwrap())
+    }
+}
+
+#[get("/get_teams_pagination")]
+pub async fn get_teams_pagination(db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.get_teams_pages().await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(pages_count) => Ok(serde_json::to_string(&pages_count).unwrap())
+    }
+}
+
+#[get("/get_all_users?<page>")]
+pub async fn get_users(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
+    if page < 1 {
+        match db.get_users(0, 10000).await {
+            Err(_) => Err(Status::InternalServerError),
+            Ok(users) => Ok(serde_json::to_string(&users).unwrap())
+        };
+    }
+    match db.get_users(page, 5).await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(users) => Ok(serde_json::to_string(&users).unwrap())
+    }
+}
+
+#[get("/get_users_pagination")]
+pub async fn get_users_pagination(db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.get_users_pages().await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(pages_count) => Ok(serde_json::to_string(&pages_count).unwrap())
+    }
+}
+
+#[get("/send_invitation?<team>&<user>")]
+pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String, user: String) -> Status {
+    let sender = token.claims.iss;
+    let sender_team = db.get_user_team(TeamType::Hackathon, &sender).await;
+    let sender_team = match sender_team {
+        Ok(team) => team,
+        Err(GetTeamError::NotInTeam) => return Status::Forbidden,
+        _ => return Status::InternalServerError
+    };
+
+
+    if !sender_team.eq(&team) {
+        return Status::Forbidden;
+    }
+
+    match db.get_user_team(TeamType::Hackathon, &user).await {
+        Err(GetTeamError::NotFound | GetTeamError::Other) => Status::InternalServerError,
+        _ => {
+            let email_header = format!("You are invited to join {}", team);
+            let data = InvitationData {
+                team,
+                usr: user.clone(),
+                exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000
+            };
+            let key = jsonwebtoken::encode(
+                &Header::default(),
+                &data,
+                &EncodingKey::from_secret(from_config("jwt_secret").as_bytes())
+            ).unwrap();
+
+            let link = DOMAIN
+                .concat("/join_team?key=")
+                .concat(key)
+                .into_string();
+
+            let email = match db.get::<RegistrationData>("login", &user).await {
+                Ok(u) => u.unwrap(),
+                Err(_) => return Status::InternalServerError
+            };
+
+            mail::send(email.email(), email_header, link);
+            Status::Ok
+        }
+    }
+}
+
+#[get("/join_team?<key>")]
+pub async fn join_team(db: &State<MongoDriver>, key: String) -> Status {
+    let data = jsonwebtoken::decode::<InvitationData>(
+        &key,
+        &DecodingKey::from_secret(from_config("jwt_secret").as_bytes()),
+        &Validation::default()
+    );
+
+    match data {
+        Ok(data) => {
+            let data = data.claims;
+            match db.add_team_member(&data.team, &data.usr).await {
+                Ok(_) => Status::Ok,
+                Err(_) => Status::InternalServerError
+            }
+        }
+        Err(_) => Status::Forbidden
     }
 }
 

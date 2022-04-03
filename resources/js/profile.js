@@ -19,6 +19,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const _buttonSave = document.querySelector("#saveprof");
 
+    let levels = ["nobody", "entry", "intern", "junior", "junior+", "middle", "middle+", "senior"]
+
+    let user_level = document.getElementById("user_lvl")
+
+    for (const level of levels) {
+        let button = document.getElementById(level)
+        button.addEventListener("click", () => {
+            user_level.innerHTML = button.innerHTML + " " + `<i class="uil uil-arrow-down sp-uil"></i>`
+
+        })
+    }
+
 
     function validate() {
         const _login = document.querySelector("#prof-login")
@@ -61,11 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     _buttonSave.addEventListener("click", () => {
         if (validate()) {
-            console.log(competences)
             let data = {
                 login: document.querySelector("#prof-login").textContent,
                 name: document.querySelector("#firname").value,
                 surname: document.querySelector("#surname").value,
+                city: document.querySelector("#city").value,
+                tg: document.querySelector("#tg").value,
+                git: document.querySelector("#git").value,
+                bio: document.querySelector("#bio").value,
+                level: document.querySelector("#user_lvl").innerHTML.split(" ")[0],
                 team: null,
                 photo: null,
                 resume: null,

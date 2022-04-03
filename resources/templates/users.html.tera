@@ -4,21 +4,22 @@
     <meta charset="UTF-8">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="../css/teams.css">
-    <title>Teams</title>
+    <link rel="stylesheet" href="../css/users.css">
+    <title>Users</title>
 </head>
-<body>
-<div id="body"></div>
+<body id="body">
+
 <header class="p-3 mb-3" style="user-select: none;">
     <div class="container">
         <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <li><a href="/" class="nav-link px-2">Main page</a></li>
-                <li><a href="/teams" class="nav-link px-2 link-disabled">Teams</a></li>
+                <li><a href="/teams" class="nav-link px-2 ">Teams</a></li>
                 {% if auth %}
                 <li><a href="/create_team" class="nav-link px-2">Create team</a></li>
-                <li><a href="/users" class="nav-link px-2">Users</a></li>
+                <li><a href="/users" class="nav-link px-2 link-disabled">Users</a></li>
                 {% endif %}
                 <li><a href="/about" class="nav-link px-2">About</a></li>
             </ul>
@@ -49,13 +50,36 @@
     </div>
 </header>
 
-<main>
-    <div class="album py-5">
-        <div class="container">
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 gy-5" id="teams-album">
+<div id="for-modal">
+    <div class="modal fade" id="mail-modal" tabindex="-1" aria-labelledby="mail-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel" style="color: black">Оправка приглашения <i
+                            class="bi bi-envelope-exclamation"></i></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="color: black">
+                    Отправка приглашения на почту работает, ссылка генерируется, но фича отключена, так как SMTP-сервис
+                    ограничил предоставление услуг в России
+                    <i class="bi bi-emoji-frown"></i>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
             </div>
         </div>
     </div>
+</div>
+
+<main>
+    <div class="text-center mb-5">
+        <h3>Список пользователей</h3>
+        <p class="lead">Вы можете приглашать их в команду или просматривать профиль</p>
+    </div>
+    <div class="container" id="users-album">
+    </div>
+
 </main>
 
 <footer>
@@ -65,11 +89,12 @@
     </div>
 </footer>
 
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="module" src="../js/main.js"></script>
-<script type="module" src="../js/teams.js"></script>
+<script type="module" src="../js/users.js"></script>
 </body>
 </html>

@@ -6,6 +6,10 @@
     text-align: left;
 }
 
+.teamcard_name {
+    text-align: center;
+}
+
 .modal-content {
     background-color: #2a2b38;
     background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
@@ -14,13 +18,28 @@
     background-size: 300%;
 }
 
-.modal-header {border: none;}
-.modal-footer {border: none;}
+.modal-header {
+    border: none;
+}
+
+.modal-footer {
+    border: none;
+}
 
 .modal-title {
     margin-top: 1rem;
     width: 100%;
     text-align: center;
+}
+
+.infoClose {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.infoClose:focus {
+    box-shadow: none;
 }
 
 #teaminfoClose {
@@ -62,4 +81,37 @@
     background-color: rgba(80, 80, 90, 1);
     margin-right: 5px;
     border-radius: 50% 50%;
+}
+
+.pagination{
+    padding: 30px 0;
+}
+
+.pagination ul{
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+.pagination a{
+    display: inline-block;
+    padding: 10px 18px;
+    color: rgb(255, 255, 255);
+}
+
+/* ONE */
+
+.p1 a{
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    padding: 0;
+    text-align: center;
+    text-decoration: none;
+}
+
+.p1 a.is-active{
+    background-color: #ffeba7;
+    border-radius: 100%;
+    color: #102770;
 }

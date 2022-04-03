@@ -4,10 +4,14 @@ use rocket::fs::NamedFile;
 use std::path::{PathBuf, Path};
 use rocket::response::Redirect;
 use rocket::{Request, State};
+use rocket::http::Status;
+use rocket::response::status::Custom;
 use crate::auth::Validator;
 use rocket_dyn_templates::{Template};
+use rocket_dyn_templates::tera::{Context, Tera};
 use crate::auth::token::Token;
 use crate::database::{MongoDriver, User};
+use serde::{Serialize, Deserialize};
 
 const PATH: &str = "resources/";
 
@@ -47,7 +51,6 @@ pub async fn profile(token: Token, db: &State<MongoDriver>) -> Template {
 
     let login = token.claims.iss;
     let user = db.get_by_login::<User>(&login).await;
-    println!("{:?}", user);
     match user {
         Ok(Some(res)) => {
             Template::render("profile", res)
@@ -61,8 +64,8 @@ pub async fn profile(token: Token, db: &State<MongoDriver>) -> Template {
 }
 
 #[require_authorization(redirect_to = "/login", custom, cus)]
-#[get("/team/<id>")]
-pub async fn team_by_id(id: i32) -> Result<Page, Redirect> {
+#[get("/team/<name>")]
+pub async fn team_by_id(name: String) -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
 
@@ -75,12 +78,47 @@ pub async fn teams(validator: Validator) -> Template {
 }
 
 #[require_authorization]
-#[get("/myteam")]
+#[get("/myteams")]
 pub async fn my_team() -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
 
-#[require_authorization]
+#[require_authorization(redirect_to = "/login", custom, cus)]
+#[get("/users")]
+pub async fn users() -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("users", context)
+}
+
+#[require_authorization(redirect_to = "/login", custom, cus)]
+#[get("/<login>")]
+pub async fn get_one_user(login: String, db: &State<MongoDriver>) -> Template {
+    #[derive(Serialize, Deserialize)]
+    struct Insertion {
+        pub auth: bool,
+        pub user: Option<User>,
+    }
+    let user = db.get_by_login::<User>(&login).await;
+    match user {
+        Ok(Some(res)) => {
+            Template::render("one_user", Insertion { auth: validator.validated, user: Some(res) })
+        }
+        _ => {
+            Template::render("one_user", Insertion { auth: validator.validated, user: None })
+        }
+    }
+}
+
+#[require_authorization(redirect_to = "/login", custom, cus)]
+#[get("/create_team")]
+pub async fn create_team() -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("create_team", context)
+}
+
+#[require_authorization(redirect_to = "/login", custom, cus)]
 #[get("/admteam")]
 pub async fn admin_team() -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
