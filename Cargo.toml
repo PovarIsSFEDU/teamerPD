@@ -11,6 +11,7 @@ name = "teamer_proc_macro"
 name = "teamer"
 
 [dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
 rocket = "0.5.0-rc.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.67"

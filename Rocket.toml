@@ -1,2 +1,4 @@
 [global]
 template_dir = 'resources/templates'
+address = "0.0.0.0"
+port = 8000

@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  teamer:
+    container_name: teamer-final
+    build:
+      context: .
+      dockerfile: Dockerfile-final
+    restart: always
+    ports:
+      - "3000:8000"
+
+    entrypoint: [ "/usr/local/bin/teamer" ]
