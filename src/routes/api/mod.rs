@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::routes::api::helpers::*;
 use std::path::Path;
 use crate::auth::{token, LoginData, RegistrationData, Validator};
-use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, TeamCreationError, GetTeamError};
+use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, team::Team, TeamCreationError, GetTeamError};
 use crate::{crypto, mail, DOMAIN};
 use rocket::fs::TempFile;
 use rocket::http::Status;
@@ -17,6 +17,7 @@ use crate::database::mongo::DatabaseOperationResult;
 use crate::prelude;
 use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
+
 
 #[post("/auth", data = "<login_data>", format = "application/json")]
 pub async fn authenticate(login_data: LoginData, db: &State<MongoDriver>) -> Custom<String> {
@@ -158,7 +159,7 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
     }
 }
 
-#[post("/update_user", data="<user>")]
+#[post("/update_user", data = "<user>")]
 pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
     let mut result = Status::Ok;
 
@@ -205,14 +206,14 @@ pub async fn upload(token: Token, u_type: &str, file: TempFile<'_>, db: &State<M
     db_result.into_custom()
 }
 
-#[post("/create_team?<team_name>")]
-pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver>) -> Status {
+#[post("/create_team", data = "<team>")]
+pub async fn create_team(token: Token, team: Team, db: &State<MongoDriver>) -> Status {
     let captain = token.claims.iss;
     println!("{}", captain);
     let check = db.get_user_team(TeamType::Hackathon, &captain).await;
     match check {
         Err(GetTeamError::NotInTeam) => {
-            let creation_result = db.create_team(TeamType::Hackathon, team_name, captain).await;
+            let creation_result = db.create_team(TeamType::Hackathon, team, captain).await;
 
             match creation_result {
                 Ok(team) => {
@@ -239,11 +240,45 @@ pub async fn create_team(token: Token, team_name: String, db: &State<MongoDriver
     }
 }
 
-#[get("/get_teams")]
-pub async fn get_teams(db: &State<MongoDriver>) -> Result<String, Status> {
-    match db.get_teams().await {
+#[get("/get_all_teams?<page>")]
+pub async fn get_teams(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
+    println!("{}", page);
+    if page < 1 {
+        page = 1
+    }
+    match db.get_teams(page, 6).await {
         Err(_) => Err(Status::InternalServerError),
         Ok(teams) => Ok(serde_json::to_string(&teams).unwrap())
+    }
+}
+
+#[get("/get_teams_pagination")]
+pub async fn get_teams_pagination(db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.get_teams_pages().await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(pages_count) => Ok(serde_json::to_string(&pages_count).unwrap())
+    }
+}
+
+#[get("/get_all_users?<page>")]
+pub async fn get_users(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
+    if page < 1 {
+        match db.get_users(0, 10000).await {
+            Err(_) => Err(Status::InternalServerError),
+            Ok(users) => Ok(serde_json::to_string(&users).unwrap())
+        };
+    }
+    match db.get_users(page, 5).await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(users) => Ok(serde_json::to_string(&users).unwrap())
+    }
+}
+
+#[get("/get_users_pagination")]
+pub async fn get_users_pagination(db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.get_users_pages().await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(pages_count) => Ok(serde_json::to_string(&pages_count).unwrap())
     }
 }
 

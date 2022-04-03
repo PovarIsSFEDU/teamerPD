@@ -48,10 +48,14 @@ async fn launch() -> Rocket<Build> {
             api::upload,
             api::create_team,
             api::update_user,
-            api::get_teams
+            api::get_teams,
+            api::get_users,
+            api::get_users_pagination,
+            api::get_teams_pagination
         ])
         .mount("/user", routes![
-            api::user::my_team
+            api::user::my_team,
+            pages::get_one_user
         ])
         .mount("/", routes![
             pages::main_page,
@@ -59,6 +63,8 @@ async fn launch() -> Rocket<Build> {
             pages::team_by_id,
             pages::teams,
             pages::my_team,
+            pages::create_team,
+            pages::users,
             pages::admin_team,
             pages::recover_password,
             pages::email_verified,

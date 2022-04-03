@@ -16,8 +16,10 @@
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <li><a href="/" class="nav-link px-2">Main page</a></li>
                 <li><a href="/teams" class="nav-link px-2">Teams</a></li>
-                <li><a href="/" class="nav-link px-2">My team</a></li>
-                <li><a href="/" class="nav-link px-2">Users</a></li>
+                {% if auth %}
+                <li><a href="/create_team" class="nav-link px-2">Create team</a></li>
+                <li><a href="/users" class="nav-link px-2">Users</a></li>
+                {% endif %}
                 <li><a href="/about" class="nav-link px-2 link-disabled">About</a></li>
             </ul>
 

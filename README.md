@@ -1,6 +1,6 @@
 <html>
   <head>
-    
+
   </head>
   <body>
     <h1>Teamer</h1>
@@ -8,9 +8,10 @@
     </div>
     <div><p>Teamer – веб-сервис, позволяющий собирать команды буквально за пару минут. Вы можете выбрать участников самостоятельно или собрать автоматически, по выбранным параметрам и компетенциям. А страница управления командой позволит капитану, всего в несколько кликов, создать и распределить задачи для каждого участника. Теперь вы можете не беспокоиться о сроках, ведь наше приложение упрощает весь процесс – от сбора, до менеджмента и участия, а также предлагает советы и посты о хакатонах.</p></div>
     <div align="middle">
-      <img src="https://user-images.githubusercontent.com/74973533/138591946-ed937d4b-9644-47c4-9b1a-5df20c607976.jpg">
+      <img src="https://user-images.githubusercontent.com/74973533/138591946-ed937d4b-9644-47c4-9b1a-5df20c607976.jpg" alt="teamer-main-logo">
     </div>
     <div><a href="https://www.figma.com/file/YjgZwSChGAehiUkVhqkaY4/Untitled?node-id=10%3A14">Ссылка</a> на дизайн. Автор - Анастасия <i>Nathanbaber</i> Глухих</div>
     <div><a href="https://hub.docker.com/r/povar/teamer/tags">Ссылка</a> на готовые к развертке образы (Docker). Автор - Павел <i>povar</i> Лукаш</div>
+    <div><a href="https://github.com/Lyrai/teamer-telegrap-parser">Ссылка</a> на парсер tg-новостей. Автор - Дмитрий <i>lyrai</i> Пузиков</div>
 </body>
 </html>

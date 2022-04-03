@@ -7,10 +7,12 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::marker::Send;
 use mongodb::bson::Bson::Document;
+use mongodb::options::FindOptions;
 use rocket::futures::{future, StreamExt};
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
+
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 macro_rules! generate_getter {
@@ -196,10 +198,15 @@ impl MongoDriver {
     pub async fn update_user(&self, user: User) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"login": user.login.clone()};
-        let update = doc! {"$set": {
+        let update = doc! {"$set":{
             "login": user.login,
             "name": user.name,
             "surname": user.surname,
+            "city": user.city,
+            "bio": user.bio,
+            "tg": user.tg,
+            "git": user.git,
+            "level": user.level,
             "team": user.team,
             "photo": user.photo,
             "resume": user.resume,
@@ -207,6 +214,7 @@ impl MongoDriver {
             "email": user.email,
             "competences": user.competences
         }};
+
 
         let result = collection.update_one(filter, update, None).await;
 
@@ -265,10 +273,10 @@ impl MongoDriver {
         }
     }
 
-    pub async fn create_team(&self, team_type: TeamType, team_name: String, captain: String) -> Result<Team, TeamCreationError> {
+    pub async fn create_team(&self, team_type: TeamType, mut team: Team, captain: String) -> Result<Team, TeamCreationError> {
         let db = self.client.database("teams").collection::<Team>("teams");
-        let team = Team::new(team_name, captain);
-        //TODO: Сделать проверку наличия комманды с таким же названием
+        team.captain = captain.clone();
+        team.members.push(captain);
         let result = db
             .insert_one(team.clone(), None)
             .await;
@@ -279,20 +287,61 @@ impl MongoDriver {
         }
     }
 
-    pub async fn get_teams(&self) -> Result<Vec<Team>, DatabaseError> {
+    pub async fn get_teams(&self, offset: usize, limit: usize) -> Result<Vec<Team>, DatabaseError> {
         let db = self.client.database("teams").collection::<Team>("teams");
-        let teams = db.find(doc!{}, None).await;
+        let teams = db.find(doc! {}, None).await;
         match teams {
             Err(_) => Err(DatabaseError::Other),
             Ok(cursor) => Ok(
                 cursor
-                    .take(10)
+                    .skip((offset - 1) * 6)
+                    .take(limit)
                     .map(|x| x.unwrap_or(Team::default()))
                     .collect::<Vec<_>>()
                     .await
             )
         }
     }
+
+    pub async fn get_teams_pages(&self) -> Result<u64, DatabaseError> {
+        let db = self.client.database("teams").collection::<User>("teams");
+        let teams_count = db.count_documents(doc! {}, None).await;
+        match teams_count {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(res) => {
+                if res < 6 { Ok(1) } else if res % 6 == 0 { Ok(res / 6) } else { Ok(res / 6 + 1) }
+            }
+        }
+    }
+
+    pub async fn get_users(&self, offset: usize, limit: usize) -> Result<Vec<User>, DatabaseError> {
+        let db = self.client.database("user").collection::<User>("users");
+        let users = db.find(doc! {"surname": { "$ne": "" }}, None).await;
+
+        match users {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(cursor) => Ok(
+                cursor
+                    .skip((offset - 1) * 5)
+                    .take(limit)
+                    .map(|x| x.unwrap_or(User::default()))
+                    .collect::<Vec<_>>()
+                    .await
+            )
+        }
+    }
+
+    pub async fn get_users_pages(&self) -> Result<u64, DatabaseError> {
+        let db = self.client.database("user").collection::<User>("users");
+        let pages_count = db.count_documents(doc! {"surname": { "$ne": "" }}, None).await;
+        match pages_count {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(res) => {
+                if res < 5 { Ok(1) } else if res % 5 == 0 { Ok(res / 5) } else { Ok(res / 5 + 1) }
+            }
+        }
+    }
+
 
     pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync
