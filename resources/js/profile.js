@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     _buttonSave.addEventListener("click", () => {
         if (validate()) {
-            console.log(competences)
             let data = {
                 login: document.querySelector("#prof-login").textContent,
                 name: document.querySelector("#firname").value,

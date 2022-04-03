@@ -218,7 +218,6 @@ pub async fn upload(token: Token, u_type: &str, file: TempFile<'_>, db: &State<M
 #[post("/create_team", data = "<team>")]
 pub async fn create_team(token: Token, team: Team, db: &State<MongoDriver>) -> Status {
     let captain = token.claims.iss;
-    println!("{}", captain);
     let check = db.get_user_team(TeamType::Hackathon, &captain).await;
     match check {
         Err(GetTeamError::NotInTeam) => {
@@ -226,7 +225,6 @@ pub async fn create_team(token: Token, team: Team, db: &State<MongoDriver>) -> S
 
             match creation_result {
                 Ok(team) => {
-                    println!("{} created!", team.name);
                     let result = db.set_user_data(UserDataType::TeamName, &team.captain, &team.name).await;
 
                     match result {
@@ -236,7 +234,6 @@ pub async fn create_team(token: Token, team: Team, db: &State<MongoDriver>) -> S
                 }
 
                 Err(TeamCreationError::Other) => {
-                    println!("Error creating team");
                     Status::InternalServerError
                 }
                 Err(TeamCreationError::Exists) => Status::BadRequest
@@ -270,7 +267,6 @@ pub async fn add_to_team(token: Token, user: String, team: String, db: &State<Mo
 
 #[get("/get_all_teams?<page>")]
 pub async fn get_teams(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
-    println!("{}", page);
     if page < 1 {
         page = 1
     }

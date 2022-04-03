@@ -274,7 +274,6 @@ impl MongoDriver {
     }
     async fn update_user_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
     {
-        println!("Replacing {0} in {1}", team_name, username);
         let user_coll = self.client.database("user").collection::<User>("users");
         let user_filter = doc! {"login": username};
         let user_update = doc! {"$set": {"team": team_name}};
@@ -287,7 +286,6 @@ impl MongoDriver {
     }
     async fn add_user_to_vector_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
     {
-        println!("Adding {0} to {1}", username, team_name);
         let team_coll = self.client.database("teams").collection::<Team>("teams");
         let team_filter = doc! {"name": team_name};
         let team_result = team_coll.find_one(team_filter.clone(), None).await;
@@ -316,16 +314,14 @@ impl MongoDriver {
         let team_filter = doc! {"name": team_name};
         let team_result = team_coll.count_documents(team_filter, None).await;
         match user_result {
-            Ok(res) if res > 0 => {println!("User found!!! {0}", username)},
+            Ok(res) if res > 0 => {},
             Ok(_) =>  {
-                println!("User {0} not found", username);
                 return AddUserToTeamResult::UserNotFound},
             Err(_) => return AddUserToTeamResult::Error
         }
         match team_result {
-            Ok(res) if res > 0 => {println!("Team found!!! {0}", team_name)},
+            Ok(res) if res > 0 => {},
             Ok(_) => {
-                println!("Team {0} not found", team_name );
                 return AddUserToTeamResult::TeamNotFound
             },
             Err(_) => return AddUserToTeamResult::Error
