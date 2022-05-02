@@ -2,7 +2,9 @@ pub mod mongo;
 pub mod team;
 mod user;
 mod new_user;
+pub mod notification;
 
+use mongodb::error::Error;
 pub use mongo::MongoDriver;
 pub use user::User;
 
@@ -30,6 +32,12 @@ pub enum VerificationError {
 pub enum DatabaseError {
     NotFound,
     Other
+}
+
+impl From<mongodb::error::Error> for DatabaseError {
+    fn from(_: Error) -> Self {
+        Self::Other
+    }
 }
 
 #[allow(dead_code)]

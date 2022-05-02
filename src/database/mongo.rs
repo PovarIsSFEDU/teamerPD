@@ -6,11 +6,14 @@ use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::marker::Send;
-use rocket::futures::StreamExt;
+use rocket::futures::{future, StreamExt};
+use syn::__private::str;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
 use crate::database::AddUserToTeamResult;
+use crate::database::notification::Notification;
+
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 macro_rules! generate_getter {
@@ -447,6 +450,60 @@ impl MongoDriver {
         }
     }
 
+    pub async fn check_notifications(&self, user: String) -> Result<Vec<Notification>, DatabaseError> {
+        let db = self.client.database("notifications").collection::<Notification>(&user);
+        let notifications = db.find(doc! {"seen": false}, None).await;
+        let vec = match notifications {
+            Err(_) => return Err(DatabaseError::Other),
+            Ok(cursor) => {
+                let result = cursor
+                    .filter(|x| future::ready(x.is_ok()))
+                    .map(|x| x.unwrap())
+                    .collect::<Vec<Notification>>()
+                    .await;
+
+                db.update_many(
+                    doc! {"seen": false},
+                    doc! {"$set": { "seen": true }},
+                    None
+                ).await?;
+                result
+            }
+        };
+
+        #[derive(Deserialize)]
+        struct Seen {
+            #[serde(default)]
+            pub seen: Vec<i32>
+        }
+        let db = self.client.database("notifications").collection::<Notification>("common");
+        let user_db = self.client.database("user").collection::<Seen>("users");
+        let seen = user_db
+            .find_one(doc! {"login": &user}, None)
+            .await?
+            .unwrap()
+            .seen;
+
+        let common = db
+            .find(doc! {"_id": {"$nin": &seen }}, None)
+            .await?
+            .map(|x| x.unwrap())
+            .collect::<Vec<Notification>>()
+            .await;
+
+        for Notification {id, ..} in &common {
+            user_db.update_one(doc! {"login": &user}, doc! {"$push": {"seen": id}}, None).await?;
+        }
+
+        Ok(vec.into_iter().chain(common).collect())
+    }
+
+    pub async fn send_notification(&self, user: &str, header: String, body: String) -> DatabaseOperationResult {
+        let db = self.client.database("notifications").collection::<Notification>(&user);
+        db.insert_one(Notification::new(header, body), None).await?;
+
+        Ok(())
+    }
 
     pub async fn get<T>(&self, field: &str, value: &str) -> mongodb::error::Result<Option<T>>
         where T: DeserializeOwned + Unpin + Send + Sync

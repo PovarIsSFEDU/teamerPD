@@ -320,7 +320,7 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String
         _ => {
             let email_header = format!("You are invited to join {}", team);
             let data = InvitationData {
-                team,
+                team: team.clone(),
                 usr: user.clone(),
                 exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000
             };
@@ -335,6 +335,7 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String
                 .concat(key)
                 .into_string();
 
+            let _ = db.send_notification(&user, format!("Вас приглашают в команду {}", team), format!("<a href=\"{}\">Присоединиться</a>", link)).await;
             let email = match db.get::<RegistrationData>("login", &user).await {
                 Ok(u) => u.unwrap(),
                 Err(_) => return Status::InternalServerError
@@ -363,6 +364,14 @@ pub async fn join_team(db: &State<MongoDriver>, key: String) -> Status {
             }
         }
         Err(_) => Status::Forbidden
+    }
+}
+
+#[get("/check_notifications")]
+pub async fn check_notifications(token: Token, db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.check_notifications(token.claims.iss).await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(notifications) => Ok(serde_json::to_string(&notifications).unwrap())
     }
 }
 
