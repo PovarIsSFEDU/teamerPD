@@ -4,9 +4,8 @@ mod helpers;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
-use std::path::Path;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
-use crate::auth::{token, LoginData, RegistrationData, Validator};
+use crate::auth::{token, LoginData, RegistrationData};
 use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, team::Team, TeamCreationError, GetTeamError};
 use crate::{crypto, mail, DOMAIN};
 use rocket::fs::TempFile;
@@ -14,8 +13,6 @@ use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
-use crate::database::mongo::DatabaseOperationResult;
-use crate::prelude;
 use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
 use crate::database::AddUserToTeamResult;
@@ -170,13 +167,10 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 
 #[post("/update_user", data = "<user>")]
 pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
-    let mut result = Status::Ok;
-
-    result = match db.update_user(user.clone()).await {
+    match db.update_user(user.clone()).await {
         Ok(_) => Status::Ok,
         Err(_) => Status::InternalServerError
-    };
-    return result;
+    }
 }
 
 #[post("/upload?<u_type>", data = "<file>")]
@@ -285,9 +279,9 @@ pub async fn get_teams_pagination(db: &State<MongoDriver>) -> Result<String, Sta
 }
 
 #[get("/get_all_users?<page>")]
-pub async fn get_users(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
+pub async fn get_users(db: &State<MongoDriver>, page: usize) -> Result<String, Status> {
     if page < 1 {
-        match db.get_users(0, 10000).await {
+        return match db.get_users(0, 10000).await {
             Err(_) => Err(Status::InternalServerError),
             Ok(users) => Ok(serde_json::to_string(&users).unwrap())
         };
@@ -346,7 +340,7 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String
                 Err(_) => return Status::InternalServerError
             };
 
-            mail::send(email.email(), email_header, link);
+            let _ = mail::send(email.email(), email_header, link);
             Status::Ok
         }
     }

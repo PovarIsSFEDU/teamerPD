@@ -1,14 +1,12 @@
 use mongodb::{Client, Collection};
-use mongodb::bson::{Bson, doc};
+use mongodb::bson::doc;
 use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::marker::Send;
-use mongodb::bson::Bson::Document;
-use mongodb::options::FindOptions;
-use rocket::futures::{future, StreamExt};
+use rocket::futures::StreamExt;
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
@@ -225,6 +223,7 @@ impl MongoDriver {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn update_competences(&self, login: &str, value: &Vec<String>) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"login": login};
@@ -353,7 +352,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn create_team(&self, team_type: TeamType, mut team: Team, captain: String) -> Result<Team, TeamCreationError> {
+    pub async fn create_team(&self, _team_type: TeamType, mut team: Team, captain: String) -> Result<Team, TeamCreationError> {
         let db = self.client.database("teams").collection::<Team>("teams");
         team.captain = captain.clone();
         team.members.push(captain);
@@ -385,11 +384,11 @@ impl MongoDriver {
 
         match update_result {
             Ok(result) if result.modified_count > 0 => {
-                self.set_user_data(UserDataType::TeamName, user, team);
+                let _ = self.set_user_data(UserDataType::TeamName, user, team).await;
                 Ok(())
             }
             Ok(_) => Err(DatabaseError::NotFound),
-            Err(e) => Err(DatabaseError::Other)
+            Err(_) => Err(DatabaseError::Other)
         }
     }
 

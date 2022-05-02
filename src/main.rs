@@ -10,7 +10,6 @@ mod teams;
 extern crate rocket;
 #[macro_use]
 extern crate teamer_proc_macro;
-#[macro_use]
 extern crate rocket_dyn_templates;
 
 use rocket::{Rocket, Build};
@@ -19,8 +18,6 @@ use crate::database::MongoDriver;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use crate::prelude::*;
-use toml::Value;
-use std::fs;
 use rocket_dyn_templates::Template;
 
 #[cfg(debug_assertions)]
