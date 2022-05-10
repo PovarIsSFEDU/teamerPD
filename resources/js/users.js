@@ -25,15 +25,15 @@ function createUsers(users) {
                         <div class="col-sm-3 text-lg-end">
                             <div class="btn-group-lg">
                                 <button type="button" class="btn to-profile" login="${user.login}"><i class="bi bi-eye"></i></button>
-                                <button type="button" class="btn send_invitation" data-bs-toggle="modal" data-bs-target="#mail-modal" login="${user.login}"><i class="bi bi-envelope"></i></button>
+                                <a type="button" class="btn send_invitation" href="/api/send_invitation?user=${user.login}"><i class="bi bi-envelope"></i></a>
                             </div>
+<!--                            data-bs-toggle="modal" data-bs-target="#mail-modal"-->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     `
-
 
     }
 
@@ -59,17 +59,17 @@ function createUsers(users) {
     }
 }
 
-function generate_send_invitation() {
-    let senders = document.querySelectorAll(".send_invitation")
-    senders.forEach((sender) => {
-        sender.addEventListener("Click", () => {
-            console.log("Send")
-            sendRequest('GET', 'api/send_invitation?user=' + sender.attributes.getNamedItem("login"), null)
-                .then(response => console.log(response))
-                .catch(err => ThrowError(err))
-        })
-    })
-}
+// function generate_send_invitation() {
+//     let senders = document.querySelectorAll(".send_invitation")
+//     senders.forEach((sender) => {
+//         sender.addEventListener("Click", () => {
+//             console.log("Send")
+//             sendRequest('GET', 'api/send_invitation?user=' + sender.attributes.getNamedItem("login"), null)
+//                 .then(response => console.log(response))
+//                 .catch(err => ThrowError(err))
+//         })
+//     })
+// }
 
 
 function generatePagination(page_num, all_pages) {
@@ -136,7 +136,6 @@ function loadPage(page_num) {
         })
         .catch(err => ThrowError(err))
 
-    generate_send_invitation()
 }
 
 
@@ -158,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
             generatePagination(page, pages_count)
         })
         .catch(err => ThrowError(err))
-    generate_send_invitation()
 
 
     const _button_signout = document.querySelector(".signout");

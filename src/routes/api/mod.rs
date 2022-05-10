@@ -10,6 +10,7 @@ use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult
 use crate::{crypto, mail, DOMAIN};
 use rocket::fs::TempFile;
 use rocket::http::Status;
+use rocket::response::Redirect;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
@@ -310,13 +311,13 @@ pub async fn find_user(db: &State<MongoDriver>, username: String) -> Result<Stri
 }
 
 #[get("/send_invitation?<user>")]
-pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String) -> Status {
+pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String) -> Redirect {
     let sender = token.claims.iss;
     let sender_team = db.get_user_team(TeamType::Hackathon, &sender).await;
     let sender_team = match sender_team {
         Ok(team) => team,
-        Err(GetTeamError::NotInTeam) => return Status::Forbidden,
-        _ => return Status::InternalServerError
+        Err(GetTeamError::NotInTeam) => return Redirect::to(uri!("/users")),
+        _ => return Redirect::to(uri!("/users")),
     };
 
 
@@ -343,13 +344,14 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String
             let _ = db.send_notification(&user, format!("Вас приглашают в команду {}", sender_team), format!("<a href=\"{}\">Присоединиться</a>", link)).await;
             let email = match db.get::<RegistrationData>("login", &user).await {
                 Ok(u) => u.unwrap(),
-                Err(_) => return Status::InternalServerError
+                Err(_) => return Redirect::to(uri!("/users"))
             };
 
             let _ = mail::send(email.email(), email_header, link);
             Status::Ok
         }
-    }
+    };
+    return Redirect::to(uri!("/users"));
 }
 
 #[get("/join_team?<key>")]
@@ -389,16 +391,22 @@ pub async fn leave_team(token: Token, team: String, db: &State<MongoDriver>) -> 
     }
 }
 
-#[get("/remove_from_team?<team>&<user>")]
-pub async fn remove_from_team(token: Token, team: String, user: String, db: &State<MongoDriver>) -> Status {
+#[get("/remove_from_team?<user>")]
+pub async fn remove_from_team(token: Token, user: String, db: &State<MongoDriver>) -> Status {
     let captain = token.claims.iss;
-    match db.check_is_captain(&team, &captain).await {
+    let sender_team = db.get_user_team(TeamType::Hackathon, &captain).await;
+    let sender_team = match sender_team {
+        Ok(team) => team,
+        Err(GetTeamError::NotInTeam) => return Status::Forbidden,
+        _ => return Status::InternalServerError
+    };
+    match db.check_is_captain(&sender_team, &captain).await {
         Ok(false) => return Status::Forbidden,
         Err(_) => return Status::InternalServerError,
         _ => {}
     }
 
-    match db.remove_team_member(&team, &user).await {
+    match db.remove_team_member(&sender_team, &user).await {
         Ok(_) => Status::Ok,
         Err(_) => Status::InternalServerError
     }

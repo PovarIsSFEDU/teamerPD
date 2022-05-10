@@ -184,7 +184,8 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td><a type="button" class="btn">Исключить</a></td>
+                                        <td><a type="button" class="btn removement" login="{{ user }}">Исключить</a>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>
@@ -218,7 +219,22 @@
                                             <span>{{ task.name }}</span>
                                         </td>
                                         <td class="align-middle">
-                                            <h6 class="mb-0"><span class="badge bg-danger">{{ task.priority }}</span>
+                                            <h6 class="mb-0">
+                                                {% if task.priority %}
+                                                    {% if task.priority == "Urgent" %}
+                                                        <span class="badge bg-danger">{{ task.priority }}</span>
+                                                    {% endif %}
+                                                    {% if task.priority == "Normal" %}
+                                                        <span class="badge bg-warning">{{ task.priority }}</span>
+                                                    {% endif %}
+                                                    {% if task.priority == "Secondary" %}
+                                                        <span class="badge bg-success">{{ task.priority }}</span>
+                                                    {% endif %}
+                                                    {% if task.priority == "Minor" %}
+                                                        <span class="badge bg-info">{{ task.priority }}</span>
+                                                    {% endif %}
+                                                {% endif %}
+
                                             </h6>
                                         </td>
                                         <td class="align-middle">
@@ -234,8 +250,8 @@
                                             <span class="ms-2">{{ task.assignee }}</span>
                                         </th>
                                         <td class="align-middle">
-                                            <a href="#!">Done</a>
-                                            <a href="#!">Remove</a>
+                                            {# <a href="#!">Done</a> #}
+                                            {# <a href="#!">Remove</a> #}
                                         </td>
                                     </tr>
                                 {% endfor %}
