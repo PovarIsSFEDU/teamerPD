@@ -333,7 +333,7 @@ impl MongoDriver {
             Err(_) => Err(DatabaseError::Other)
         }
     }
-    async fn add_user_to_vector_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
+    async fn add_user_to_vector_team(&self, team_name: &str, username: &str) -> DatabaseOperationResult
     {
         let team_coll = self.client.database("teams").collection::<Team>("teams");
         let team_filter = doc! {"name": team_name};
@@ -341,7 +341,7 @@ impl MongoDriver {
         match team_result {
             Ok(Some(team)) => {
                 let mut members = team.members.clone();
-                members.push(username.clone());
+                members.push(username.to_owned());
                 let team_update = doc! {"$set":{"members": members}};
                 let team_result_2 = team_coll.update_one(team_filter, team_update, None).await;
                 match team_result_2 {
@@ -349,7 +349,7 @@ impl MongoDriver {
                     Ok(_) => Err(DatabaseError::NotFound),
                     Err(_) => Err(DatabaseError::Other)
                 }
-            }
+            },
             Ok(None) => Err(DatabaseError::NotFound),
             Err(_) => Err(DatabaseError::Other)
         }
@@ -363,29 +363,28 @@ impl MongoDriver {
         let team_filter = doc! {"name": team_name};
         let team_result = team_coll.count_documents(team_filter, None).await;
         match user_result {
-            Ok(res) if res > 0 => {}
-            Ok(_) => {
-                return AddUserToTeamResult::UserNotFound;
-            }
+            Ok(res) if res > 0 => {},
+            Ok(_) =>  {
+                return AddUserToTeamResult::UserNotFound},
             Err(_) => return AddUserToTeamResult::Error
         }
         match team_result {
-            Ok(res) if res > 0 => {}
+            Ok(res) if res > 0 => {},
             Ok(_) => {
-                return AddUserToTeamResult::TeamNotFound;
-            }
+                return AddUserToTeamResult::TeamNotFound
+            },
             Err(_) => return AddUserToTeamResult::Error
         }
         let upd_res_user = self.update_user_team(team_name, username).await;
         match upd_res_user
         {
-            Ok(_) => {}
+            Ok(_) => {},
             Err(_) => return AddUserToTeamResult::Error
         }
         let upd_res_team = self.add_user_to_vector_team(team_name, username).await;
         match upd_res_team
         {
-            Ok(_) => {}
+            Ok(_) => {},
             Err(_) => return AddUserToTeamResult::Error
         }
         AddUserToTeamResult::Ok
@@ -434,7 +433,7 @@ impl MongoDriver {
             .client
             .database("teams")
             .collection::<Team>("teams")
-            .update_one(doc! {"name": team.clone()}, doc! {"$set": {"members": members}}, None)
+            .update_one(doc!{"name": team}, doc!{"$set": {"members": members}}, None)
             .await;
 
         match update_result {
@@ -473,12 +472,12 @@ impl MongoDriver {
             return Err(DatabaseError::Other);
         }
 
-        let members = members.into_iter().filter(|x| !x.eq(user)).collect::<Vec<String>>();
+        let members = members.into_iter().filter(|x| !x.eq(user) ).collect::<Vec<String>>();
         let update_result = self
             .client
             .database("teams")
             .collection::<Team>("teams")
-            .update_one(doc! {"name": team.clone()}, doc! {"$set": {"members": members}}, None)
+            .update_one(doc!{"name": team}, doc!{"$set": {"members": members}}, None)
             .await;
 
         match update_result {
@@ -516,10 +515,7 @@ impl MongoDriver {
         println!("{:?}", update_result);
         match update_result {
             Ok(result) if result.modified_count > 0 => Ok(()),
-            Ok(e) => {
-                println!("Modified {}", e.modified_count);
-                Err(DatabaseError::NotFound)
-            }
+            Ok(e) => { println!("Modified {}", e.modified_count); Err(DatabaseError::NotFound) },
             Err(_) => Err(DatabaseError::Other)
         }
     }
@@ -657,7 +653,7 @@ impl MongoDriver {
     }
 
     pub async fn send_notification(&self, user: &str, header: String, body: String) -> DatabaseOperationResult {
-        let db = self.client.database("notifications").collection::<Notification>(&user);
+        let db = self.client.database("notifications").collection::<Notification>(user);
         db.insert_one(Notification::new(header, body), None).await?;
 
         Ok(())

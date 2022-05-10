@@ -19,7 +19,7 @@ pub fn send_recovery(email: String, link: String) -> Result<(), ()> {
     send(&email, "Password recovery", link)
 }
 
-pub fn send<S: Into<String>>(email: &String, subject: S, link: String) -> Result<(), ()> {
+pub fn send<S: Into<String>>(email: &str, subject: S, link: String) -> Result<(), ()> {
     let email = Message::builder()
         .from(SENDER.parse().unwrap())
         .to(email.parse().unwrap())
@@ -38,5 +38,5 @@ pub fn send<S: Into<String>>(email: &String, subject: S, link: String) -> Result
 
     mailer
         .send(&email)
-        .map_both(|_| (), |e| { println!("Error sending email: {:?}", e); () })
+        .map_both(|_| (), |e| { println!("Error sending email: {:?}", e) })
 }
