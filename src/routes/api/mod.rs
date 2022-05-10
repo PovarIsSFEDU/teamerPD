@@ -239,13 +239,14 @@ pub async fn create_team(token: Token, team: Team, db: &State<MongoDriver>) -> S
         Ok(_) => Status::BadRequest
     }
 }
+
 #[post("/add_to_team?<user>&<team>")]
 pub async fn add_to_team(token: Token, user: String, team: String, db: &State<MongoDriver>) -> Status
 {
     match db.check_is_captain(&team, &token.claims.iss).await
     {
-        Ok(true) => {},
-        Ok(false) => {return Status::Forbidden},
+        Ok(true) => {}
+        Ok(false) => { return Status::Forbidden; }
         Err(..) => return Status::InternalServerError
     }
     match db.add_user_to_team(&team, &user).await
@@ -319,21 +320,19 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String
     };
 
 
-
-
     match db.get_user_team(TeamType::Hackathon, &user).await {
         Err(GetTeamError::NotFound | GetTeamError::Other) => Status::InternalServerError,
         _ => {
-            let email_header = format!("You are invited to join {}", sender_team);
+            let email_header = format!("You are invited to join {}", sender_team.clone());
             let data = InvitationData {
-                team: sender_team,
+                team: sender_team.clone(),
                 usr: user.clone(),
-                exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000
+                exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000,
             };
             let key = jsonwebtoken::encode(
                 &Header::default(),
                 &data,
-                &EncodingKey::from_secret(from_config("jwt_secret").as_bytes())
+                &EncodingKey::from_secret(from_config("jwt_secret").as_bytes()),
             ).unwrap();
 
             let link = DOMAIN
@@ -341,7 +340,7 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String
                 .concat(key)
                 .into_string();
 
-            let _ = db.send_notification(&user, format!("Вас приглашают в команду {}", team), format!("<a href=\"{}\">Присоединиться</a>", link)).await;
+            let _ = db.send_notification(&user, format!("Вас приглашают в команду {}", sender_team), format!("<a href=\"{}\">Присоединиться</a>", link)).await;
             let email = match db.get::<RegistrationData>("login", &user).await {
                 Ok(u) => u.unwrap(),
                 Err(_) => return Status::InternalServerError
@@ -358,7 +357,7 @@ pub async fn join_team(db: &State<MongoDriver>, key: String) -> Status {
     let data = jsonwebtoken::decode::<InvitationData>(
         &key,
         &DecodingKey::from_secret(from_config("jwt_secret").as_bytes()),
-        &Validation::default()
+        &Validation::default(),
     );
 
     match data {
@@ -405,16 +404,22 @@ pub async fn remove_from_team(token: Token, team: String, user: String, db: &Sta
     }
 }
 
-#[post("/create_task?<team>", data = "<task>")]
-pub async fn create_task(token: Token, task: Task, team: String, db: &State<MongoDriver>) -> Status {
+#[post("/create_task", data = "<task>")]
+pub async fn create_task(token: Token, task: Task, db: &State<MongoDriver>) -> Status {
     let captain = token.claims.iss;
-    match db.check_is_captain(&team, &captain).await {
+    let sender_team = db.get_user_team(TeamType::Hackathon, &captain).await;
+    let sender_team = match sender_team {
+        Ok(team) => team,
+        Err(GetTeamError::NotInTeam) => return Status::Forbidden,
+        _ => return Status::InternalServerError
+    };
+    match db.check_is_captain(&sender_team, &captain).await {
         Ok(false) => return Status::Forbidden,
         Err(_) => return Status::InternalServerError,
         _ => {}
     }
 
-    match db.create_task(task, &team).await {
+    match db.create_task(task, &sender_team).await {
         Ok(_) => Status::Ok,
         Err(_) => Status::InternalServerError
     }

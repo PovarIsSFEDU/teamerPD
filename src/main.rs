@@ -52,7 +52,6 @@ async fn launch() -> Rocket<Build> {
             api::add_to_team,
             api::send_invitation,
             api::find_user,
-            api::send_invitation,
             api::check_notifications,
             api::leave_team,
             api::remove_from_team,

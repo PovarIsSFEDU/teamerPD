@@ -30,6 +30,7 @@ pub enum VerificationError {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub enum DatabaseError {
     NotFound,
     Other
