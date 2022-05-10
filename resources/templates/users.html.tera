@@ -55,14 +55,14 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel" style="color: black">Оправка приглашения <i
-                            class="bi bi-envelope-exclamation"></i></h5>
+                    <h5 class="modal-title" id="exampleModalLabel" style="color: black">Оправка приглашения
+                        произведена</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="color: black">
-                    Отправка приглашения на почту работает, ссылка генерируется, но фича отключена, так как SMTP-сервис
-                    ограничил предоставление услуг в России
-                    <i class="bi bi-emoji-frown"></i>
+                    Отправка приглашения на почту работает, но, к сожалению, письма могут попадать в спам
+                    <i class="bi bi-emoji-frown"></i><br>
+                    Помните, что ссылка действительна всего два дня!
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>

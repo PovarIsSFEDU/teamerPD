@@ -1,4 +1,3 @@
-use mongodb::options::UpdateModifications;
 use rocket::data::{FromData, Outcome};
 use rocket::{Data, Request};
 use rocket::http::Status;
@@ -17,20 +16,6 @@ pub struct Team {
     pub long_bio: String,
     #[serde(default)]
     pub competences: Vec<String>,
-}
-
-impl Team {
-    pub fn new(name: String, captain: String) -> Self {
-        Team {
-            name,
-            logo: None,
-            captain: captain.clone(),
-            members: vec![captain],
-            competences: vec![],
-            short_bio: String::from(""),
-            long_bio: String::from(""),
-        }
-    }
 }
 
 #[async_trait]

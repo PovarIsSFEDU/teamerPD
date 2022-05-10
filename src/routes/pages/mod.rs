@@ -2,16 +2,17 @@ use std::collections::HashMap;
 use crate::prelude::*;
 use rocket::fs::NamedFile;
 use std::path::{PathBuf, Path};
-use rocket::response::Redirect;
-use rocket::{Request, State};
 use rocket::http::Status;
-use rocket::response::status::Custom;
+use rocket::response::Redirect;
+use rocket::State;
 use crate::auth::Validator;
 use rocket_dyn_templates::{Template};
-use rocket_dyn_templates::tera::{Context, Tera};
 use crate::auth::token::Token;
-use crate::database::{MongoDriver, User};
+use crate::database::{GetTeamError, MongoDriver, User};
 use serde::{Serialize, Deserialize};
+use crate::database::task::Task;
+use crate::database::team::Team;
+use crate::teams::TeamType;
 
 const PATH: &str = "resources/";
 
@@ -69,18 +70,31 @@ pub async fn team_by_id(name: String) -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
 
+#[require_authorization(redirect_to = "/login", custom, cus)]
+#[get("/my_teams")]
+pub async fn my_teams(token: Token, db: &State<MongoDriver>) -> Template {
+    #[derive(Serialize, Deserialize)]
+    struct Insertion {
+        pub auth: bool,
+        pub team: Option<Team>,
+        pub tasks: Option<Vec<Task>>,
+    }
+    let user = token.claims.iss;
+    let t = db.get_user_team(TeamType::Hackathon, &user).await.unwrap();
+    let team = db
+        .get_team::<Team>("name", &t)
+        .await
+        .unwrap()
+        .unwrap();
+    Template::render("my_teams", Insertion { auth: validator.validated, team: Some(team), tasks: Some(db.get_tasks(&t).await.unwrap()) })
+}
+
 
 #[get("/teams")]
 pub async fn teams(validator: Validator) -> Template {
     let mut context = HashMap::new();
     context.insert("auth", validator.validated);
     Template::render("teams", context)
-}
-
-#[require_authorization]
-#[get("/myteams")]
-pub async fn my_team() -> Result<Page, Redirect> {
-    Ok(html_from_file(PATH, "templates/team.html"))
 }
 
 #[require_authorization(redirect_to = "/login", custom, cus)]
