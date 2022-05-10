@@ -51,7 +51,13 @@ async fn launch() -> Rocket<Build> {
             api::get_teams_pagination,
             api::add_to_team,
             api::send_invitation,
-            api::check_notifications
+            api::check_notifications,
+            api::leave_team,
+            api::remove_from_team,
+            api::create_task,
+            api::update_task,
+            api::update_task_status,
+            api::remove_task
         ])
         .mount("/user", routes![
             api::user::my_team,

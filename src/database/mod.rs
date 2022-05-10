@@ -3,6 +3,7 @@ pub mod team;
 mod user;
 mod new_user;
 pub mod notification;
+pub mod task;
 
 use mongodb::error::Error;
 pub use mongo::MongoDriver;
@@ -63,6 +64,7 @@ pub enum TeamCreationError {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub enum GetTeamError {
     NotInTeam,
     NotFound,

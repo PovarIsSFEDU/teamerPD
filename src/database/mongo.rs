@@ -13,6 +13,7 @@ use crate::database::team::Team;
 use crate::teams::TeamType;
 use crate::database::AddUserToTeamResult;
 use crate::database::notification::Notification;
+use crate::database::task::Task;
 
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
@@ -186,8 +187,18 @@ impl MongoDriver {
         };
 
         let filter = doc! {"login": login};
-        let update = doc! {"$set": {parameter: value}};
-        let result = collection.update_one(filter, update, None).await;
+
+        let result = match (data_type, value) {
+            (UserDataType::TeamName, "") => {
+                let update = doc! {"$set": {parameter: None::<String>}};
+                collection.update_one(filter, update, None).await
+            }
+            _ => {
+                let update = doc! {"$set": {parameter: value}};
+                collection.update_one(filter, update, None).await
+            }
+        };
+
 
         match result {
             Ok(result) if result.modified_count > 0 => Ok(()),
@@ -377,6 +388,10 @@ impl MongoDriver {
             Err(_) => return Err(DatabaseError::Other)
         }.members;
 
+        if members.contains(&user.to_owned()) {
+            return Err(DatabaseError::Other);
+        }
+
         members.push(user.to_owned());
         let update_result = self
             .client
@@ -390,6 +405,91 @@ impl MongoDriver {
                 let _ = self.set_user_data(UserDataType::TeamName, user, team).await;
                 Ok(())
             }
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn remove_team_member(&self, team: &str, user: &str) -> DatabaseOperationResult {
+        let db_team = self.get_team::<Team>("name", team).await;
+        let db_team = match db_team {
+            Ok(Some(t)) => t,
+            Ok(None) => return Err(DatabaseError::NotFound),
+            Err(_) => return Err(DatabaseError::Other)
+        };
+        let members = db_team.clone().members;
+        if user.to_owned() == db_team.captain {
+            for member in members {
+                self.set_user_data(UserDataType::TeamName, &member, "").await?;
+            }
+
+            self
+                .client
+                .database("teams")
+                .collection::<Team>("teams")
+                .delete_one(doc! {"name": team}, None)
+                .await?;
+            return Ok(());
+        }
+
+        if !members.contains(&user.to_owned()) {
+            return Err(DatabaseError::Other);
+        }
+
+        let members = members.into_iter().filter(|x| !x.eq(user) ).collect::<Vec<String>>();
+        let update_result = self
+            .client
+            .database("teams")
+            .collection::<Team>("teams")
+            .update_one(doc!{"name": team.clone()}, doc!{"$set": {"members": members}}, None)
+            .await;
+
+        match update_result {
+            Ok(result) if result.modified_count > 0 => {
+                let _ = self.set_user_data(UserDataType::TeamName, user, "").await;
+                Ok(())
+            }
+            Ok(_) => Err(DatabaseError::NotFound),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn create_task(&self, task: Task, team: &str) -> DatabaseOperationResult {
+        let tasks = self.client.database("teams").collection::<Task>(team);
+        let result = tasks.insert_one(task, None).await;
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn update_task(&self, team: &str, task: Task) -> DatabaseOperationResult {
+        let tasks = self.client.database("teams").collection::<Task>(team);
+        let update = doc! { "$set": {
+            "name": &task.name,
+            "description": &task.description,
+            "status": format!("{:?}", task.status),
+            "assignee": &task.assignee,
+            "priority": format!("{:?}", task.priority),
+            "expiration": &task.expiration
+        }};
+        let update_result = tasks.update_one(doc! {"name": &task.name}, update, None).await;
+
+        println!("{:?}", update_result);
+        match update_result {
+            Ok(result) if result.modified_count > 0 => Ok(()),
+            Ok(e) => { println!("Modified {}", e.modified_count); Err(DatabaseError::NotFound) },
+            Err(_) => Err(DatabaseError::Other)
+        }
+    }
+
+    pub async fn remove_task(&self, team: &str, task: Task) -> DatabaseOperationResult {
+        let tasks = self.client.database("teams").collection::<Task>(team);
+
+        let delete_result = tasks.delete_one(doc! {"name": task.name}, None).await;
+        match delete_result {
+            Ok(result) if result.deleted_count > 0 => Ok(()),
             Ok(_) => Err(DatabaseError::NotFound),
             Err(_) => Err(DatabaseError::Other)
         }
