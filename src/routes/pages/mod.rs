@@ -69,18 +69,20 @@ pub async fn team_by_id(name: String) -> Result<Page, Redirect> {
     Ok(html_from_file(PATH, "templates/team.html"))
 }
 
+#[require_authorization(redirect_to = "/login", custom, cus)]
+#[get("/my_teams")]
+pub async fn my_teams() -> Template {
+    let mut context = HashMap::new();
+    context.insert("auth", validator.validated);
+    Template::render("my_teams", context)
+}
+
 
 #[get("/teams")]
 pub async fn teams(validator: Validator) -> Template {
     let mut context = HashMap::new();
     context.insert("auth", validator.validated);
     Template::render("teams", context)
-}
-
-#[require_authorization]
-#[get("/myteams")]
-pub async fn my_team() -> Result<Page, Redirect> {
-    Ok(html_from_file(PATH, "templates/team.html"))
 }
 
 #[require_authorization(redirect_to = "/login", custom, cus)]

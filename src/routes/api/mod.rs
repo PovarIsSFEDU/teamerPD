@@ -314,8 +314,8 @@ pub async fn find_user(db: &State<MongoDriver>, username: String) -> Result<Stri
     }
 }
 
-#[get("/send_invitation?<team>&<user>")]
-pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String, user: String) -> Status {
+#[get("/send_invitation?<user>")]
+pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String) -> Status {
     let sender = token.claims.iss;
     let sender_team = db.get_user_team(TeamType::Hackathon, &sender).await;
     let sender_team = match sender_team {
@@ -325,16 +325,14 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String
     };
 
 
-    if !sender_team.eq(&team) {
-        return Status::Forbidden;
-    }
+
 
     match db.get_user_team(TeamType::Hackathon, &user).await {
         Err(GetTeamError::NotFound | GetTeamError::Other) => Status::InternalServerError,
         _ => {
-            let email_header = format!("You are invited to join {}", team);
+            let email_header = format!("You are invited to join {}", sender_team);
             let data = InvitationData {
-                team,
+                team: sender_team,
                 usr: user.clone(),
                 exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() + 2 * 24 * 60 * 60 * 1000
             };
