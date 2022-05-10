@@ -306,6 +306,14 @@ pub async fn get_users_pagination(db: &State<MongoDriver>) -> Result<String, Sta
     }
 }
 
+#[get("/find_user?<username>")]
+pub async fn find_user(db: &State<MongoDriver>, username: String) -> Result<String, Status> {
+    match db.find_by_username(username).await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(users) => Ok(serde_json::to_string(&users).unwrap())
+    }
+}
+
 #[get("/send_invitation?<team>&<user>")]
 pub async fn send_invitation(token: Token, db: &State<MongoDriver>, team: String, user: String) -> Status {
     let sender = token.claims.iss;

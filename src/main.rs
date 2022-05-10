@@ -53,7 +53,8 @@ async fn launch() -> Rocket<Build> {
             api::get_users_pagination,
             api::get_teams_pagination,
             api::add_to_team,
-            api::send_invitation
+            api::send_invitation,
+            api::find_user
         ])
         .mount("/user", routes![
             api::user::my_team,

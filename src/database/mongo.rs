@@ -1,5 +1,5 @@
 use mongodb::{Client, Collection};
-use mongodb::bson::{Bson, doc};
+use mongodb::bson::{Bson, bson, doc, Regex};
 use crate::database::{RegistrationResult, LoginError, User, VerificationError, DatabaseError, UserDataType, TeamDataType, TeamCreationError, GetTeamError};
 use crate::auth::{RegistrationData, LoginData};
 use crate::prelude::MapBoth;
@@ -8,11 +8,13 @@ use serde::{Deserialize, Serialize};
 use std::marker::Send;
 use mongodb::bson::Bson::Document;
 use mongodb::options::FindOptions;
-use rocket::futures::{future, StreamExt};
+use rocket::futures::{future, Stream, StreamExt};
 use crate::database::new_user::NewUser;
 use crate::database::team::Team;
 use crate::teams::TeamType;
 use crate::database::AddUserToTeamResult;
+use crate::prelude::concat::Concatenate;
+
 pub type DatabaseOperationResult = Result<(), DatabaseError>;
 
 macro_rules! generate_getter {
@@ -300,7 +302,7 @@ impl MongoDriver {
                     Ok(_) => Err(DatabaseError::NotFound),
                     Err(_) => Err(DatabaseError::Other)
                 }
-            },
+            }
             Ok(None) => Err(DatabaseError::NotFound),
             Err(_) => Err(DatabaseError::Other)
         }
@@ -314,28 +316,29 @@ impl MongoDriver {
         let team_filter = doc! {"name": team_name};
         let team_result = team_coll.count_documents(team_filter, None).await;
         match user_result {
-            Ok(res) if res > 0 => {},
-            Ok(_) =>  {
-                return AddUserToTeamResult::UserNotFound},
+            Ok(res) if res > 0 => {}
+            Ok(_) => {
+                return AddUserToTeamResult::UserNotFound;
+            }
             Err(_) => return AddUserToTeamResult::Error
         }
         match team_result {
-            Ok(res) if res > 0 => {},
+            Ok(res) if res > 0 => {}
             Ok(_) => {
-                return AddUserToTeamResult::TeamNotFound
-            },
+                return AddUserToTeamResult::TeamNotFound;
+            }
             Err(_) => return AddUserToTeamResult::Error
         }
         let upd_res_user = self.update_user_team(team_name, username).await;
         match upd_res_user
         {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(_) => return AddUserToTeamResult::Error
         }
         let upd_res_team = self.add_user_to_vector_team(team_name, username).await;
         match upd_res_team
         {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(_) => return AddUserToTeamResult::Error
         }
         AddUserToTeamResult::Ok
@@ -380,12 +383,12 @@ impl MongoDriver {
             .client
             .database("teams")
             .collection::<Team>("teams")
-            .update_one(doc!{"name": team.clone()}, doc!{"$set": {"members": members}}, None)
+            .update_one(doc! {"name": team.clone()}, doc! {"$set": {"members": members}}, None)
             .await;
 
         match update_result {
             Ok(result) if result.modified_count > 0 => {
-                self.set_user_data(UserDataType::TeamName, user, team);
+                self.set_user_data(UserDataType::TeamName, user, team).await;
                 Ok(())
             }
             Ok(_) => Err(DatabaseError::NotFound),
@@ -445,6 +448,24 @@ impl MongoDriver {
             Ok(res) => {
                 if res < 5 { Ok(1) } else if res % 5 == 0 { Ok(res / 5) } else { Ok(res / 5 + 1) }
             }
+        }
+    }
+
+    pub async fn find_by_username(&self, param: String) -> Result<Vec<User>, DatabaseError> {
+        let db = self.client.database("user").collection::<User>("users");
+        let reg = Regex{ pattern: param, options: "i".to_string() };
+        let users = db.find(doc! {"$or": [  { "login": &reg } , { "name": &reg }, { "surname": &reg } ]}, None).await;
+        match users {
+            Err(_) => Err(DatabaseError::Other),
+            Ok(cursor) => Ok({
+                println!("{:?}", cursor.size_hint());
+                cursor
+                    .take(5)
+                    .map(|x| x.unwrap_or(User::default()))
+                    .collect::<Vec<_>>()
+                    .await
+            }
+            )
         }
     }
 
