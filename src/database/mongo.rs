@@ -392,6 +392,10 @@ impl MongoDriver {
             return Err(DatabaseError::Other);
         }
 
+        if let Ok(team) = self.get_user_team(TeamType::Hackathon, user).await {
+            self.remove_team_member(&team, user).await;
+        }
+
         members.push(user.to_owned());
         let update_result = self
             .client
