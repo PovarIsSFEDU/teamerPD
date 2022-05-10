@@ -238,7 +238,7 @@ impl MongoDriver {
     }
 
     #[allow(dead_code)]
-    pub async fn update_competences(&self, login: &str, value: &Vec<String>) -> DatabaseOperationResult {
+    pub async fn update_competences(&self, login: &str, value: &[String]) -> DatabaseOperationResult {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"login": login};
         let update = doc! {"$set": {"competences": value}};
@@ -270,7 +270,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn get_user_team(&self, _team_type: TeamType, username: &String) -> Result<String, GetTeamError> {
+    pub async fn get_user_team(&self, _team_type: TeamType, username: &str) -> Result<String, GetTeamError> {
         let collection = self.client.database("user").collection::<User>("users");
         let filter = doc! {"login": username};
         let result = collection.find_one(filter, None).await;
@@ -285,7 +285,7 @@ impl MongoDriver {
             Err(_) => Err(GetTeamError::Other)
         }
     }
-    async fn update_user_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
+    async fn update_user_team(&self, team_name: &str, username: &str) -> DatabaseOperationResult
     {
         let user_coll = self.client.database("user").collection::<User>("users");
         let user_filter = doc! {"login": username};
@@ -297,7 +297,7 @@ impl MongoDriver {
             Err(_) => Err(DatabaseError::Other)
         }
     }
-    async fn add_user_to_vector_team(&self, team_name: &String, username: &String) -> DatabaseOperationResult
+    async fn add_user_to_vector_team(&self, team_name: &str, username: &str) -> DatabaseOperationResult
     {
         let team_coll = self.client.database("teams").collection::<Team>("teams");
         let team_filter = doc! {"name": team_name};
@@ -305,7 +305,7 @@ impl MongoDriver {
         match team_result {
             Ok(Some(team)) => {
                 let mut members = team.members.clone();
-                members.push(username.clone());
+                members.push(username.to_owned());
                 let team_update = doc! {"$set":{"members": members}};
                 let team_result_2 = team_coll.update_one(team_filter, team_update, None).await;
                 match team_result_2 {
@@ -319,7 +319,7 @@ impl MongoDriver {
         }
     }
 
-    pub async fn add_user_to_team(&self, team_name: &String, username: &String) -> AddUserToTeamResult {
+    pub async fn add_user_to_team(&self, team_name: &str, username: &str) -> AddUserToTeamResult {
         let user_coll = self.client.database("user").collection::<User>("users");
         let user_filter = doc! {"login": username};
         let user_result = user_coll.count_documents(user_filter, None).await;
@@ -354,7 +354,7 @@ impl MongoDriver {
         AddUserToTeamResult::Ok
     }
 
-    pub async fn check_is_captain(&self, team_name: &String, captain: &String) -> Result<bool, DatabaseError>
+    pub async fn check_is_captain(&self, team_name: &str, captain: &str) -> Result<bool, DatabaseError>
     {
         let team_coll = self.client.database("teams").collection::<Team>("teams");
         let team_filter = doc! {"name": team_name, "captain": captain};
@@ -397,7 +397,7 @@ impl MongoDriver {
             .client
             .database("teams")
             .collection::<Team>("teams")
-            .update_one(doc!{"name": team.clone()}, doc!{"$set": {"members": members}}, None)
+            .update_one(doc!{"name": team}, doc!{"$set": {"members": members}}, None)
             .await;
 
         match update_result {
@@ -418,7 +418,7 @@ impl MongoDriver {
             Err(_) => return Err(DatabaseError::Other)
         };
         let members = db_team.clone().members;
-        if user.to_owned() == db_team.captain {
+        if *user == db_team.captain {
             for member in members {
                 self.set_user_data(UserDataType::TeamName, &member, "").await?;
             }
@@ -441,7 +441,7 @@ impl MongoDriver {
             .client
             .database("teams")
             .collection::<Team>("teams")
-            .update_one(doc!{"name": team.clone()}, doc!{"$set": {"members": members}}, None)
+            .update_one(doc!{"name": team}, doc!{"$set": {"members": members}}, None)
             .await;
 
         match update_result {
@@ -504,7 +504,7 @@ impl MongoDriver {
                 cursor
                     .skip((offset - 1) * 6)
                     .take(limit)
-                    .map(|x| x.unwrap_or(Team::default()))
+                    .map(|x| x.unwrap_or_default())
                     .collect::<Vec<_>>()
                     .await
             )
@@ -532,7 +532,7 @@ impl MongoDriver {
                 cursor
                     .skip((offset - 1) * 5)
                     .take(limit)
-                    .map(|x| x.unwrap_or(User::default()))
+                    .map(|x| x.unwrap_or_default())
                     .collect::<Vec<_>>()
                     .await
             )
@@ -599,7 +599,7 @@ impl MongoDriver {
     }
 
     pub async fn send_notification(&self, user: &str, header: String, body: String) -> DatabaseOperationResult {
-        let db = self.client.database("notifications").collection::<Notification>(&user);
+        let db = self.client.database("notifications").collection::<Notification>(user);
         db.insert_one(Notification::new(header, body), None).await?;
 
         Ok(())
