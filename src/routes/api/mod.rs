@@ -4,18 +4,15 @@ mod helpers;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::prelude::*;
 use crate::routes::api::helpers::*;
-use std::path::Path;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
-use crate::auth::{token, LoginData, RegistrationData, Validator};
-use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, team::Team, TeamCreationError, GetTeamError};
+use crate::auth::{token, LoginData, RegistrationData};
+use crate::database::{DatabaseError, LoginError, MongoDriver, RegistrationResult, TeamDataType, UserDataType, VerificationError, User, team::Team, TeamCreationError, GetTeamError, task::Task};
 use crate::{crypto, mail, DOMAIN};
 use rocket::fs::TempFile;
 use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 use crate::auth::token::Token;
-use crate::database::mongo::DatabaseOperationResult;
-use crate::prelude;
 use crate::teams::{TeamType};
 use serde::{Serialize, Deserialize};
 use crate::database::AddUserToTeamResult;
@@ -170,13 +167,10 @@ pub async fn send_password_recovery(user: String, db: &State<MongoDriver>) -> Re
 
 #[post("/update_user", data = "<user>")]
 pub async fn update_user(_token: Token, user: User, db: &State<MongoDriver>) -> Status {
-    let mut result = Status::Ok;
-
-    result = match db.update_user(user.clone()).await {
+    match db.update_user(user.clone()).await {
         Ok(_) => Status::Ok,
         Err(_) => Status::InternalServerError
-    };
-    return result;
+    }
 }
 
 #[post("/upload?<u_type>", data = "<file>")]
@@ -285,9 +279,9 @@ pub async fn get_teams_pagination(db: &State<MongoDriver>) -> Result<String, Sta
 }
 
 #[get("/get_all_users?<page>")]
-pub async fn get_users(db: &State<MongoDriver>, mut page: usize) -> Result<String, Status> {
+pub async fn get_users(db: &State<MongoDriver>, page: usize) -> Result<String, Status> {
     if page < 1 {
-        match db.get_users(0, 10000).await {
+        return match db.get_users(0, 10000).await {
             Err(_) => Err(Status::InternalServerError),
             Ok(users) => Ok(serde_json::to_string(&users).unwrap())
         };
@@ -347,12 +341,13 @@ pub async fn send_invitation(token: Token, db: &State<MongoDriver>, user: String
                 .concat(key)
                 .into_string();
 
+            let _ = db.send_notification(&user, format!("Вас приглашают в команду {}", team), format!("<a href=\"{}\">Присоединиться</a>", link)).await;
             let email = match db.get::<RegistrationData>("login", &user).await {
                 Ok(u) => u.unwrap(),
                 Err(_) => return Status::InternalServerError
             };
 
-            mail::send(email.email(), email_header, link);
+            let _ = mail::send(email.email(), email_header, link);
             Status::Ok
         }
     }
@@ -375,6 +370,103 @@ pub async fn join_team(db: &State<MongoDriver>, key: String) -> Status {
             }
         }
         Err(_) => Status::Forbidden
+    }
+}
+
+#[get("/check_notifications")]
+pub async fn check_notifications(token: Token, db: &State<MongoDriver>) -> Result<String, Status> {
+    match db.check_notifications(token.claims.iss).await {
+        Err(_) => Err(Status::InternalServerError),
+        Ok(notifications) => Ok(serde_json::to_string(&notifications).unwrap())
+    }
+}
+
+#[get("/leave_team?<team>")]
+pub async fn leave_team(token: Token, team: String, db: &State<MongoDriver>) -> Status {
+    let user = token.claims.iss;
+    match db.remove_team_member(&team, &user).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
+    }
+}
+
+#[get("/remove_from_team?<team>&<user>")]
+pub async fn remove_from_team(token: Token, team: String, user: String, db: &State<MongoDriver>) -> Status {
+    let captain = token.claims.iss;
+    match db.check_is_captain(&team, &captain).await {
+        Ok(false) => return Status::Forbidden,
+        Err(_) => return Status::InternalServerError,
+        _ => {}
+    }
+
+    match db.remove_team_member(&team, &user).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
+    }
+}
+
+#[post("/create_task?<team>", data = "<task>")]
+pub async fn create_task(token: Token, task: Task, team: String, db: &State<MongoDriver>) -> Status {
+    let captain = token.claims.iss;
+    match db.check_is_captain(&team, &captain).await {
+        Ok(false) => return Status::Forbidden,
+        Err(_) => return Status::InternalServerError,
+        _ => {}
+    }
+
+    match db.create_task(task, &team).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
+    }
+}
+
+#[post("/update_task?<team>", data = "<task>")]
+pub async fn update_task(token: Token, team: String, task: Task, db: &State<MongoDriver>) -> Status {
+    let captain = token.claims.iss;
+    match db.check_is_captain(&team, &captain).await {
+        Ok(false) => return Status::Forbidden,
+        Err(_) => return Status::InternalServerError,
+        _ => {}
+    }
+
+    match db.update_task(&team, task).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
+    }
+}
+
+#[post("/update_task_status?<team>", data = "<task>")]
+pub async fn update_task_status(token: Token, team: String, task: Task, db: &State<MongoDriver>) -> Status {
+    let user = token.claims.iss;
+    let db_team = db.get_team::<Team>("name", &team).await;
+
+    let db_team = match db_team {
+        Ok(Some(t)) => t,
+        _ => return Status::InternalServerError
+    };
+
+    if db_team.captain == user || db_team.members.contains(&user) {
+        match db.update_task(&team, task).await {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError
+        }
+    } else {
+        Status::Forbidden
+    }
+}
+
+#[post("/remove_task?<team>", data = "<task>")]
+pub async fn remove_task(token: Token, team: String, task: Task, db: &State<MongoDriver>) -> Status {
+    let captain = token.claims.iss;
+    match db.check_is_captain(&team, &captain).await {
+        Ok(false) => return Status::Forbidden,
+        Err(_) => return Status::InternalServerError,
+        _ => {}
+    }
+
+    match db.remove_task(&team, task).await {
+        Ok(_) => Status::Ok,
+        Err(_) => Status::InternalServerError
     }
 }
 

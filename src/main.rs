@@ -10,7 +10,6 @@ mod teams;
 extern crate rocket;
 #[macro_use]
 extern crate teamer_proc_macro;
-#[macro_use]
 extern crate rocket_dyn_templates;
 
 use rocket::{Rocket, Build};
@@ -19,8 +18,6 @@ use crate::database::MongoDriver;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use crate::prelude::*;
-use toml::Value;
-use std::fs;
 use rocket_dyn_templates::Template;
 
 #[cfg(debug_assertions)]
@@ -54,7 +51,15 @@ async fn launch() -> Rocket<Build> {
             api::get_teams_pagination,
             api::add_to_team,
             api::send_invitation,
-            api::find_user
+            api::find_user,
+            api::send_invitation,
+            api::check_notifications,
+            api::leave_team,
+            api::remove_from_team,
+            api::create_task,
+            api::update_task,
+            api::update_task_status,
+            api::remove_task
         ])
         .mount("/user", routes![
             api::user::my_team,
