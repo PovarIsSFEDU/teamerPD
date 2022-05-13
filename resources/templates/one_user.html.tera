@@ -22,6 +22,7 @@
                 {% if auth %}
                     <li><a href="/create_team" class="nav-link px-2">Create team</a></li>
                     <li><a href="/users" class="nav-link px-2">Users</a></li>
+                    <li><a href="/my_teams" class="nav-link px-2">My team</a></li>
                 {% endif %}
                 <li><a href="/about" class="nav-link px-2">About</a></li>
             </ul>

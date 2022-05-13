@@ -8,7 +8,7 @@ function createTeams(teams) {
     album.innerHTML = ``
     modal_album.innerHTML = ``
     for (let team of teams) {
-        let target_modal = 'teaminfo_' + team.name
+        let target_modal = 'teaminfo_' + team.name.replaceAll(" ", "")
 
         album.innerHTML += `
         <div class="col">
